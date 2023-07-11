@@ -71,6 +71,7 @@ RUN apt-get -y remove g++-10 cpp-10 gcc-10 cmake libstdc++-10-dev libc6-dev liba
 
 
 RUN findmnt -T/home/pi/.cache/pip || rm -r /home/pi/.cache/pip
+RUN rm -f /var/cache/apt/*.bin
 
 
 EXPOSE 80
