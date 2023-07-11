@@ -6,7 +6,7 @@ on:
 env:
   REGISTRY: ghcr.io
 #  IMAGE_NAME: ${{ github.repository }}
-  IMAGE_NAME: birdnet-amd64-auto
+  IMAGE_NAME: srd424/birdnet-amd64-auto
   
 jobs:
   builder-build:
