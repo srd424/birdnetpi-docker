@@ -1,5 +1,6 @@
 #ctr=$(buildah from debian:bullseye)
-FROM debian:bullseye-slim
+
+FROM debian:bullseye-slim AS build
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
 RUN apt-get -y install --no-install-recommends systemd dbus sudo udev ca-certificates
@@ -24,6 +25,20 @@ RUN curl -s 'https://patch-diff.githubusercontent.com/raw/MatthewBCooke/BirdNET-
 RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/221c225d390f3488abf27539448ea4b901ec2786.diff' | \
 	patch -d /home/pi/BirdNET-Pi -p1
 
+FROM debian:bullseye-slim
+RUN apt-get update
+RUN apt-get -y install --no-install-recommends eatmydata
+RUN apt-get -y install --no-install-recommends systemd dbus sudo udev ca-certificates
+RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
+RUN systemctl enable systemd-resolved
+RUN adduser --disabled-login --gecos "" pi
+RUN adduser pi sudo
+RUN apt-get -y install --no-install-recommends curl jq python3-venv patch cron
+
+COPY --from=build /home/pi/BirdNET-Pi /home/pi/BirdNET-Pi
+RUN rm -r /home/pi/BirdNET-Pi/.git
+RUN chown -R pi:pi /home/pi
+
 RUN echo INSTALL_PULSEAUDIO=false >/home/pi/BirdNET-Pi/birdnet.conf.override
 RUN echo INSTALL_FFMPEG=static >>/home/pi/BirdNET-Pi/birdnet.conf.override
 
@@ -40,6 +55,7 @@ RUN bash -c 'f=include_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && l
 RUN bash -c 'f=birds.db;	d=/home/pi/BirdNET-Pi/scripts; rm -f $d/$f && ln -s /state/$f $d/$f'
 
 RUN rm -r /home/pi/.cache
+
 
 EXPOSE 80
 ENTRYPOINT ["/bin/systemd"]
