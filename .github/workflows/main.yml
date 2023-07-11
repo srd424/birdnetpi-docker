@@ -23,13 +23,13 @@ jobs:
           bnpi0-main
           bnpi0-
           bnpi
-    - name: Build with docker
-      run: mkdir -p cache/pip && docker build -v $PWD/cache/pip:/home/pi/.cache/pip --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
+    - name: Build with buildah
+      run: mkdir -p cache/pip && buildah bud -v $PWD/cache/pip:/home/pi/.cache/pip --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
     - name: Log in to the Container registry
-      uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+      uses: redhat-actions/podman-login@v1
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish image
-      run: docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      run: podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
