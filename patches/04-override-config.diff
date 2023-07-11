@@ -1,0 +1,9 @@
+--- BirdNET-Pi/scripts/install_config.sh.orig   2023-07-09 21:51:41.093693992 +0100
++++ BirdNET-Pi/scripts/install_config.sh        2023-07-09 21:50:20.689229348 +0100
+@@ -254,4 +254,6 @@
+ EOF
++  local overf=$my_dir/birdnet.conf.override 
++  [ -e $overf ] && cat $overf >>$birdnet_conf
+ }
+ 
+ # Checks for a birdnet.conf file

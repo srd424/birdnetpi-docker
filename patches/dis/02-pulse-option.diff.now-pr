@@ -1,0 +1,69 @@
+diff --git a/birdnet.conf-defaults b/birdnet.conf-defaults
+index ee3c270..9a78522 100644
+--- a/birdnet.conf-defaults
++++ b/birdnet.conf-defaults
+@@ -219,3 +219,15 @@ CUSTOM_IMAGE_TITLE=""
+ LAST_RUN=
+ THIS_RUN=
+ IDFILE=$HOME/BirdNET-Pi/IdentifiedSoFar.txt
++
++################################################################################
++#------------------------------  Installation ---------------------------------#
++################################################################################
++
++## These are options which define which packages are installed when the system
++## is first set-up. At the moment this is intended to help eliminate packages
++## which pull in a large number of dependencies, and may not be needed when
++## running in e.g. a container, or in some parts of a client/server setup.
++
++## pulseaudio is used for recording from a local sound source
++INSTALL_PULSEAUDIO=true
+diff --git a/scripts/install_config.sh b/scripts/install_config.sh
+index c2364de..67a2301 100755
+--- a/scripts/install_config.sh
++++ b/scripts/install_config.sh
+@@ -249,6 +249,18 @@ CUSTOM_IMAGE_TITLE=""
+ LAST_RUN=
+ THIS_RUN=
+ IDFILE=$HOME/BirdNET-Pi/IdentifiedSoFar.txt
++
++################################################################################
++#------------------------------  Installation ---------------------------------#
++################################################################################
++
++## These are options which define which packages are installed when the system
++## is first set-up. At the moment this is intended to help eliminate packages
++## which pull in a large number of dependencies, and may not be needed when
++## running in e.g. a container, or in some parts of a client/server setup.
++
++## pulseaudio is used for recording from a local sound source
++INSTALL_PULSEAUDIO=true
+ EOF
+ }
+ 
+diff --git a/scripts/install_services.sh b/scripts/install_services.sh
+index 1585259..8e92440 100755
+--- a/scripts/install_services.sh
++++ b/scripts/install_services.sh
+@@ -12,15 +12,18 @@ export HOME=$HOME
+ export PYTHON_VIRTUAL_ENV="$HOME/BirdNET-Pi/birdnet/bin/python3"
+ 
+ install_depends() {
+-  apt install -y debian-keyring debian-archive-keyring apt-transport-https
++  apt-get install -y debian-keyring debian-archive-keyring apt-transport-https
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+   curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+-  apt -qqq update && apt -qqy upgrade
++  apt-get -qqq update && apt-get -qqy upgrade
+   echo "icecast2 icecast2/icecast-setup boolean false" | debconf-set-selections
+-  apt install -qqy caddy ftpd sqlite3 php-sqlite3 alsa-utils \
++  apt-get install -qqy caddy ftpd sqlite3 php-sqlite3 alsa-utils \
+     pulseaudio avahi-utils sox libsox-fmt-mp3 php php-fpm php-curl php-xml \
+     php-zip icecast2 swig ffmpeg wget unzip curl cmake make bc libjpeg-dev \
+     zlib1g-dev python3-dev python3-pip python3-venv lsof net-tools
++  if $INSTALL_PULSEAUDIO; then
++    apt-get install -qqy pulseaudio
++  fi
+ }
+ 
+ 
