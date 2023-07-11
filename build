@@ -1,0 +1,5 @@
+TMPDIR=~/contbuild/bulk/tmp \
+	buildah bud \
+		-v /vol/pip-cache/birdnet:/home/pi/.cache/pip \
+		--build-arg apt_proxy="http://fs2.lan:3142/" \
+		 --no-cache --force-rm=false
