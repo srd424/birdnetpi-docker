@@ -24,7 +24,12 @@ jobs:
           bnpi0-
           bnpi
     - name: Build with buildah
-      run: mkdir -p cache/pip && buildah bud -v $PWD/cache/pip:/home/pi/.cache/pip --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
+      run: |
+        mkdir -p cache/pip cache/apt && \
+        buildah bud \
+          -v $PWD/cache/apt:/var/cache/apt/archives \
+          -v $PWD/cache/pip:/home/pi/.cache/pip \
+          --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
     - name: fix cache ownership
       run: sudo bash -c "chown -v -R \$SUDO_USER cache"
     - name: Log in to the Container registry
