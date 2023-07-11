@@ -14,8 +14,17 @@ jobs:
     steps:
     - name: Checkout source
       uses: actions/checkout@v2
+    - name: cache build cache
+      uses: actions/cache@v3
+      with:
+        path: cache
+        key: bnpi0-main
+        restore-keys: |
+          bnpi0-main
+          bnpi0-
+          bnpi
     - name: Build with docker
-      run: docker build --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
+      run: mkdir -p cache/pip && docker build -v $PWD/cache/pip:/home/pi/.cache/pip --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
     - name: Log in to the Container registry
       uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
       with:
