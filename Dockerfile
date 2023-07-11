@@ -1,6 +1,11 @@
 #ctr=$(buildah from debian:bullseye)
 
 FROM debian:bullseye-slim AS build
+
+ARG apt_proxy
+
+#RUN bash -c "[ -n \"$apt_proxy\" ] && echo \"Acquire::http::proxy \\\"http://$apt_proxy\\\";\" >/etc/apt/apt.conf.d/02proxy"
+RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
 RUN apt-get -y install --no-install-recommends systemd dbus sudo ca-certificates
@@ -9,6 +14,10 @@ RUN systemctl enable systemd-resolved
 RUN adduser --disabled-login --gecos "" pi
 RUN adduser pi sudo
 RUN apt-get -y install --no-install-recommends curl git jq python3-venv patch cron
+
+# bind mounting onto /home/pi may create it early with wrong ownership
+RUN chown -R pi:pi /home/pi
+
 RUN su -l pi -c "git clone -b debian --depth=1 https://github.com/MatthewBCooke/BirdNET-Pi.git /home/pi/BirdNET-Pi"
 RUN curl -s 'https://patch-diff.githubusercontent.com/raw/mcguirepr89/BirdNET-Pi/pull/970.diff' | \
 	patch -d /home/pi/BirdNET-Pi -p1
@@ -26,6 +35,10 @@ RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/221c225d390f3488abf2753
 	patch -d /home/pi/BirdNET-Pi -p1
 
 FROM debian:bullseye-slim
+ARG apt_proxy
+RUN echo proxy $apt_proxy
+RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
+
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
 RUN apt-get -y install --no-install-recommends systemd dbus sudo ca-certificates
@@ -54,9 +67,10 @@ RUN bash -c 'f=exclude_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && l
 RUN bash -c 'f=include_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=birds.db;	d=/home/pi/BirdNET-Pi/scripts; rm -f $d/$f && ln -s /state/$f $d/$f'
 
-RUN apt-get -y remove g++-10 cpp-10 gcc-10 cmake libstdc++-10-dev libc6-dev libasan6
+RUN apt-get -y remove g++-10 cpp-10 gcc-10 cmake libstdc++-10-dev libc6-dev libasan6 libtsan0 cmake-data binutils-x86-64-linux-gnu linux-libc-dev swig4.0 manpages-dev liblsan0 libubsan1
 
-RUN rm -r /home/pi/.cache
+
+RUN findmnt -T/home/pi/.cache/pip || rm -r /home/pi/.cache/pip
 
 
 EXPOSE 80
