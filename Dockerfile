@@ -1,5 +1,5 @@
 #ctr=$(buildah from debian:bullseye)
-FROM debian:bullseye
+FROM debian:bullseye-slim
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
 RUN apt-get -y install --no-install-recommends systemd dbus sudo udev ca-certificates
