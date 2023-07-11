@@ -13,6 +13,6 @@ Mounting a filesystem large enough to store recordings on `/home/pi/BirdSongs` i
 
 Example podman command line:
 ```
-podman run --name birdnet -p 80 -v $HOME/src/birdnet.state:/state -t -i ghcr.io/srd424/birdnetpi-amd64 /bin/systemd
+podman run --name birdnet -p 8080:80 -v $HOME/src/birdnet.state:/state -t -i ghcr.io/srd424/birdnetpi-amd64
 ```
 I haven't yet tested this in docker, rumour has it is less friendly to containers using systemd, at least by default. Bug reports welcome!
