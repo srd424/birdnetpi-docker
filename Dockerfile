@@ -3,7 +3,7 @@
 FROM debian:bullseye-slim AS build
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
-RUN apt-get -y install --no-install-recommends systemd dbus sudo udev ca-certificates
+RUN apt-get -y install --no-install-recommends systemd dbus sudo ca-certificates
 RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
 RUN systemctl enable systemd-resolved
 RUN adduser --disabled-login --gecos "" pi
@@ -28,7 +28,7 @@ RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/221c225d390f3488abf2753
 FROM debian:bullseye-slim
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
-RUN apt-get -y install --no-install-recommends systemd dbus sudo udev ca-certificates
+RUN apt-get -y install --no-install-recommends systemd dbus sudo ca-certificates
 RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
 RUN systemctl enable systemd-resolved
 RUN adduser --disabled-login --gecos "" pi
@@ -53,6 +53,8 @@ RUN bash -c 'f=birdnet.conf;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state
 RUN bash -c 'f=exclude_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=include_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=birds.db;	d=/home/pi/BirdNET-Pi/scripts; rm -f $d/$f && ln -s /state/$f $d/$f'
+
+RUN apt-get -y remove g++-10 cpp-10 gcc-10
 
 RUN rm -r /home/pi/.cache
 
