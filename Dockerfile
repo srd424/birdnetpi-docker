@@ -5,6 +5,7 @@ FROM debian:bullseye-slim AS build
 ARG apt_proxy
 
 #RUN bash -c "[ -n \"$apt_proxy\" ] && echo \"Acquire::http::proxy \\\"http://$apt_proxy\\\";\" >/etc/apt/apt.conf.d/02proxy"
+RUN findmnt -T/var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
@@ -37,6 +38,7 @@ RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/221c225d390f3488abf2753
 FROM debian:bullseye-slim
 ARG apt_proxy
 RUN echo proxy $apt_proxy
+RUN findmnt -T/var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 
 RUN apt-get update
