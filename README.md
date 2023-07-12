@@ -16,3 +16,5 @@ Example podman command line:
 podman run --name birdnet -p 8080:80 -v $HOME/src/birdnet.state:/state -t -i ghcr.io/srd424/birdnetpi-amd64
 ```
 I haven't yet tested this in docker, rumour has it is less friendly to containers using systemd, at least by default. Bug reports welcome!
+
+**12-Jun-2023:** I'm now running this 'rootfully' with podman as my main, 'live' BirdNET-Pi install, so we'll see how it goes.
