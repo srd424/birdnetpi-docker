@@ -25,10 +25,11 @@ jobs:
           bnpi
     - name: Build with buildah
       run: |
-        mkdir -p cache/pip cache/apt && \
+        mkdir -p cache/pip cache/apt cache/git && \
         buildah bud \
           -v $PWD/cache/apt:/var/cache/apt/archives \
           -v $PWD/cache/pip:/home/pi/.cache/pip \
+          -v $PWD/cache/git:/home/pi/gitcache \
           --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
     - name: fix cache ownership
       run: sudo bash -c "chown -v -R \$SUDO_USER cache"
