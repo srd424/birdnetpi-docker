@@ -1,0 +1,45 @@
+diff --git a/birdnet.conf-defaults b/birdnet.conf-defaults
+index ee3c270..1c1bce2 100644
+--- a/birdnet.conf-defaults
++++ b/birdnet.conf-defaults
+@@ -68,6 +68,11 @@ BIRDNETPI_URL=
+ 
+ RTSP_STREAM=
+ 
++## extra options to pass to ffmpeg for RTSP recording, this can be useful
++## e.g. to force a specific transport
++
++RTSP_REC_OPTS=
++
+ #-----------------------  Apprise Miscellanous Configuration -------------------#
+ 
+ APPRISE_NOTIFICATION_TITLE="New BirdNET-Pi Detection"
+diff --git a/scripts/birdnet_recording.sh b/scripts/birdnet_recording.sh
+index da777e4..9eb48fe 100755
+--- a/scripts/birdnet_recording.sh
++++ b/scripts/birdnet_recording.sh
+@@ -42,7 +42,7 @@ if [ ! -z $RTSP_STREAM ];then
+ 
+   # Make sure were passing something valid to ffmpeg, ffmpeg will run interactive and control our loop by waiting ${RECORDING_LENGTH} between loops because it will stop once that much has been recorded
+   if [ -n "$FFMPEG_PARAMS" ];then
+-    ffmpeg -hide_banner -loglevel $LOGGING_LEVEL -nostdin $FFMPEG_PARAMS
++    ffmpeg $RTSP_REC_OPTS -hide_banner -loglevel $LOGGING_LEVEL -nostdin $FFMPEG_PARAMS
+   fi
+ 
+   done
+diff --git a/scripts/install_config.sh b/scripts/install_config.sh
+index c2364de..106ee07 100755
+--- a/scripts/install_config.sh
++++ b/scripts/install_config.sh
+@@ -96,6 +96,11 @@ BIRDNETPI_URL=
+ 
+ RTSP_STREAM=
+ 
++## extra options to pass to ffmpeg for RTSP recording, this can be useful
++## e.g. to force a specific transport
++
++RTSP_REC_OPTS=
++
+ #-----------------------  Apprise Miscellanous Configuration -------------------#
+ 
+ APPRISE_NOTIFICATION_TITLE="New BirdNET-Pi Detection"

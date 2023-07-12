@@ -42,6 +42,9 @@ RUN curl -s 'https://patch-diff.githubusercontent.com/raw/MatthewBCooke/BirdNET-
 RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/221c225d390f3488abf27539448ea4b901ec2786.diff' | \
 	patch -d /home/pi/BirdNET-Pi -p1
 
+ADD patches/07-ffmpeg-opts.diff /patches
+RUN patch -d /home/pi/BirdNET-Pi -p1 </patches/07-ffmpeg-opts.diff
+
 FROM debian:bullseye-slim
 ARG apt_proxy
 RUN echo proxy $apt_proxy
