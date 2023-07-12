@@ -1,0 +1,1 @@
+podman run --no-hosts --dns=192.168.128.2 --name birdnet -p 80 -v $HOME/src/birdnet.state:/state -t -i 5b58
