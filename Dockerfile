@@ -70,9 +70,6 @@ RUN echo '/usr/lib/x86_64-linux-gnu/libeatmydata.so.1' >>/etc/ld.so.preload
 
 RUN su -l pi -c "/home/pi/BirdNET-Pi/scripts/install_birdnet.sh"
 
-RUN rm -f /usr/local/lib/ffmpeg/ffprobe
-RUN rm -f /home/pi/BirdNET-Pi/*.whl
-RUN rm -f /home/pi/BirdNET-Pi/models/BirdNET_6K_GLOBAL_MODEL.tflite
 
 RUN bash -c 'f=BirdDB.txt;			d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=apprise.txt;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
@@ -80,6 +77,14 @@ RUN bash -c 'f=birdnet.conf;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state
 RUN bash -c 'f=exclude_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=include_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=birds.db;	d=/home/pi/BirdNET-Pi/scripts; rm -f $d/$f && ln -s /state/$f $d/$f'
+
+RUN rm /etc/timezone
+
+# slim down image
+
+RUN rm -f /usr/local/lib/ffmpeg/ffprobe
+RUN rm -f /home/pi/BirdNET-Pi/*.whl
+RUN rm -f /home/pi/BirdNET-Pi/models/BirdNET_6K_GLOBAL_MODEL.tflite
 
 RUN apt-get -y remove g++-10 cpp-10 gcc-10 cmake libstdc++-10-dev libc6-dev libasan6 libtsan0 cmake-data binutils-x86-64-linux-gnu linux-libc-dev swig4.0 manpages-dev liblsan0 libubsan1
 
