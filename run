@@ -1,1 +1,12 @@
-podman run --no-hosts --dns=192.168.128.2 --name birdnet -p 80 -v $HOME/src/birdnet.state:/state -t -i 5b58
+#! /bin/bash
+
+set -x
+
+if [ "$1" = "-d" ]; then
+	docker rm birdnet || true
+	docker run --cap-add=cap_net_bind_service --dns=192.168.128.2 --name birdnet -p 80 -v $HOME/src/birdnet.state:/state -t -i  localhost/birdnetpi-amd64
+else
+	podman rm birdnet || true
+	podman run --no-hosts --dns=192.168.128.2 --name birdnet -p 80 -v $HOME/src/birdnet.state:/state -t -i birdnetpi-amd64:latest
+fi
+

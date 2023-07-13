@@ -9,9 +9,8 @@ RUN findmnt /var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || tr
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
-RUN apt-get -y install --no-install-recommends systemd dbus sudo ca-certificates
+RUN apt-get -y install --no-install-recommends dbus sudo ca-certificates
 RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
-RUN systemctl enable systemd-resolved
 RUN adduser --disabled-login --gecos "" pi
 RUN adduser pi sudo
 RUN apt-get -y install --no-install-recommends curl git jq python3-venv patch cron
@@ -51,11 +50,13 @@ RUN echo proxy $apt_proxy
 RUN findmnt /var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 
+ADD --chmod=0755 systemctl3.py /usr/bin/systemctl
+
+
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
-RUN apt-get -y install --no-install-recommends systemd dbus sudo ca-certificates
+RUN apt-get -y install --no-install-recommends dbus sudo ca-certificates
 RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
-RUN systemctl enable systemd-resolved
 RUN adduser --disabled-login --gecos "" pi
 RUN adduser pi sudo
 RUN apt-get -y install --no-install-recommends curl jq python3-venv patch cron
@@ -95,6 +96,15 @@ RUN apt-get -y remove g++-10 cpp-10 gcc-10 cmake libstdc++-10-dev libc6-dev liba
 RUN findmnt /home/pi/.cache/pip || rm -r /home/pi/.cache/pip
 RUN rm -f /var/cache/apt/*.bin
 
+#	-e 's|^ExecStart=(.*)$|ExecStart=/sbin/capsh --user=caddy --addamb=cap_net_bind_service   -- -c "\1"|' \
+RUN sed -i -r \
+	-e 's|^ExecStart=(.*)$|ExecStart=/sbin/capsh --user=caddy -- -c "\1"|' \
+	-e '/^(User|Group)/d' \
+	/lib/systemd/system/caddy.service
+
+RUN bash -c "d=/etc/systemd/system//php7.4-fpm.service.d; mkdir \$d && echo -e '[Service]\nExecStartPre=/bin/bash -c \"mkdir /run/php; chown www-data:www-data /run/php; chmod 0755 /run/php\"' >\$d/mkdir.conf"
+
+RUN setcap cap_net_bind_service=+ep /usr/bin/caddy
 
 EXPOSE 80
-ENTRYPOINT ["/bin/systemd"]
+ENTRYPOINT ["/usr/bin/systemctl"]

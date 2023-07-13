@@ -4,4 +4,5 @@ TMPDIR=~/contbuild/bulk/tmp \
 		-v $PWD/build-cache/apt:/var/cache/apt/archives \
 		-v $PWD/build-cache/git:/home/pi/gitcache \
 		--build-arg apt_proxy="http://fs2.lan:3142/" \
-		 --no-cache --force-rm=false
+		 --no-cache --force-rm=false \
+		--tag birdnetpi-amd64:latest
