@@ -27,7 +27,7 @@ docker run  --name birdnet -p 8080:80 \
   --cap-add=cap_net_bind_service \
   -v $HOME/birdnet.state:/state \
   -v $HOME/BirdSongs:/home/pi/BirdSongs \
-  localhost/birdnetpi-amd64:latest
+  ghcr.io/srd424/birdnetpi-amd64:latest
 ```
 
 ## Changelog ##
