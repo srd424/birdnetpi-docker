@@ -41,7 +41,7 @@ RUN curl -s 'https://patch-diff.githubusercontent.com/raw/MatthewBCooke/BirdNET-
 RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/221c225d390f3488abf27539448ea4b901ec2786.diff' | \
 	patch -d /home/pi/BirdNET-Pi -p1
 
-RUN curl -s 'https://github.com/MatthewBCooke/BirdNET-Pi/commit/ddad8b5ff2be6a896a2598900ba0d7bf428bf046.diff' | \
+RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/8d45a09a59f16ca3d26544ce62b84e532aede627.diff' | \
 	patch -d /home/pi/BirdNET-Pi -p1
 
 ADD patches/07-ffmpeg-opts.diff /patches
