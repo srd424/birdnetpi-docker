@@ -22,7 +22,6 @@ Whereas for docker you need to explicitly add the CAP_NET_BIND_SERVICE so caddy 
 ```
 docker run --cap-add=cap_net_bind_service --name birdnet -p 80 -v $HOME/birdnet.state:/state localhost/birdnetpi-amd64:latest
 ```
-I haven't yet tested this in docker, rumour has it is less friendly to containers using systemd, at least by default. Bug reports welcome!
 
 ## Changelog ##
 **12-Jul-2023:** I'm now running this 'rootfully' with podman as my main, 'live' BirdNET-Pi install, so we'll see how it goes.
