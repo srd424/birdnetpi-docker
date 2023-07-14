@@ -1,0 +1,1 @@
+smemstat -l -p $(echo $(systemd-cgls /machine.slice/libpod-e11a1074d64a728ea705c0c95f102aaebf999b546a8e8fac7eff4d7db4f2a94a.scope | awk '{print $1}' | grep -v Control | sed -e 's/^..//') | sed -e 's/ /,/g')
