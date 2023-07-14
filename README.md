@@ -16,11 +16,18 @@ Mounting a filesystem large enough to store recordings on `/home/pi/BirdSongs` i
 
 Example podman command line:
 ```
-podman run --name birdnet -p 8080:80 -v $HOME/birdnet.state:/state ghcr.io/srd424/birdnetpi-amd64:latest
+podman run --name birdnet -p 8080:80 \
+  -v $HOME/birdnet.state:/state \
+  -v $HOME/BirdSongs:/home/pi/BirdSongs \
+  ghcr.io/srd424/birdnetpi-amd64:latest
 ```
 Whereas for docker you need to explicitly add the CAP_NET_BIND_SERVICE so caddy can bind to port 80:
 ```
-docker run --cap-add=cap_net_bind_service --name birdnet -p 80 -v $HOME/birdnet.state:/state localhost/birdnetpi-amd64:latest
+docker run  --name birdnet -p 8080:80 \
+  --cap-add=cap_net_bind_service \
+  -v $HOME/birdnet.state:/state \
+  -v $HOME/BirdSongs:/home/pi/BirdSongs \
+  localhost/birdnetpi-amd64:latest
 ```
 
 ## Changelog ##
