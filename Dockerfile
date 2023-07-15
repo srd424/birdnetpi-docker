@@ -1,30 +1,37 @@
-#ctr=$(buildah from debian:bullseye)
+#
+# =========================
+#
 
 FROM debian:bullseye-slim AS shared
-ARG MODULES="all"
 
+ARG MODULES="all"
 ARG apt_proxy
 
-RUN echo "modules is $MODULES"
-
-#RUN bash -c "[ -n \"$apt_proxy\" ] && echo \"Acquire::http::proxy \\\"http://$apt_proxy\\\";\" >/etc/apt/apt.conf.d/02proxy"
 RUN findmnt /var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 
-RUN apt-get update
-RUN apt-get -y install --no-install-recommends eatmydata
-RUN apt-get -y install --no-install-recommends dbus sudo ca-certificates
-RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
+ARG aptopts="-y -qq --no-install-recommends"
+
+RUN apt-get update >/dev/null
+RUN apt-get $aptopts install eatmydata
+RUN apt-get $aptopts install dbus sudo ca-certificates
+RUN apt-get $aptopts install less iproute2 vim-tiny iputils-ping net-tools
 RUN adduser --disabled-login --gecos "" pi
 RUN adduser pi sudo
-RUN apt-get -y install --no-install-recommends curl jq python3-venv xz-utils
+RUN apt-get $aptopts install curl jq python3-venv xz-utils
 
 RUN rm -f /var/cache/apt/*.bin
 
+#
+# =========================
+#
+
 FROM shared AS build
 
+ARG MODULES="all"
+ARG aptopts="-y -qq --no-install-recommends"
 
-RUN apt-get -y install --no-install-recommends git patch
+RUN apt-get $aptopts install git patch
 
 # bind mounting onto /home/pi may create it early with wrong ownership
 RUN chown -R pi:pi /home/pi
@@ -64,13 +71,28 @@ ADD patches/04-override-config.diff /patches
 ADD patches/07-ffmpeg-opts.diff /patches
 RUN patch -d /home/pi/BirdNET-Pi -p1 </patches/07-ffmpeg-opts.diff
 
+RUN su -l pi -c " \
+	cd ~/BirdNET-Pi; \
+	python3 -m venv birdnet; \
+	source ./birdnet/bin/activate; \
+  	debarch=\"\$(dpkg --print-architecture)\"; \
+  	reqd=\$HOME/BirdNET-Pi/reqs; \
+	for mod in common $MODULES; do \
+		reqf=\$reqd/\$mod-\$debarch.txt; \
+		[ ! -e \$reqf ] && reqf=\$reqd/\$mod.txt; \
+		[ ! -e \$reqf ] && continue; \
+		echo \"installing python reqs from \$reqf\"; \
+		pip3 install -U -r \$reqf; \
+	done"
+
 FROM shared AS final
 ARG MODULES="all"
+ARG aptopts="-qq -y --no-install-recommends"
 RUN echo "modules is $MODULES"
 
 ADD --chmod=0755 systemctl3.py /usr/bin/systemctl
 
-RUN apt-get -y install --no-install-recommends cron
+RUN apt-get $aptopts install cron
 
 COPY --from=build /home/pi/BirdNET-Pi /home/pi/BirdNET-Pi
 #RUN rm -r /home/pi/BirdNET-Pi/.git
@@ -88,8 +110,15 @@ RUN echo '/usr/lib/x86_64-linux-gnu/libeatmydata.so.1' >>/etc/ld.so.preload
 
 RUN bash -c "echo 'APT::Install-Recommends "false";' >/etc/apt/apt.conf.d/01no-recommends"
 
-RUN su -l pi -c "/home/pi/BirdNET-Pi/scripts/install_birdnet.sh"
-
+#RUN su -l pi -c "/home/pi/BirdNET-Pi/scripts/install_birdnet.sh"
+RUN su -l pi -c "env my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_config.sh"
+RUN env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_services.sh
+RUN su -l pi -c " \
+	my_dir=/home/pi/BirdNET-Pi; \
+	source \$my_dir/birdnet.conf; \
+	mkdir -p \${RECS_DIR}; \
+	cd \$my_dir/scripts; \
+	./install_language_label_nm.sh -l \$DATABASE_LANG"
 
 RUN bash -c 'f=BirdDB.txt;			d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
 RUN bash -c 'f=apprise.txt;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
