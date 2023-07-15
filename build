@@ -22,6 +22,7 @@ TMPDIR=~/contbuild/bulk/tmp \
 	buildah bud \
 		-v /vol/pip-cache/birdnet:/home/pi/.cache/pip \
 		-v $PWD/build-cache/apt:/var/cache/apt/archives \
+		-v $PWD/build-cache/apt-lists:/var/lib/apt/lists \
 		-v $PWD/build-cache/git:/home/pi/gitcache \
 		--build-arg apt_proxy="http://fs2.lan:3142/" \
 		--build-arg MODULES="$modules" \

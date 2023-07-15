@@ -6,21 +6,35 @@ FROM debian:bullseye-slim AS shared
 
 ARG MODULES="all"
 ARG apt_proxy
+ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
+ARG PYTHONDONTWRITEBYTECODE=1
+
+RUN bash -c "echo \$PYTHONDONTWRITEBYTECODE"
+RUN mkdir /etc/python3.9
+RUN echo "import sys; sys.dont_write_bytecode = True" >/etc/python3.9/sitecustomize.py
 
 RUN findmnt /var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
 
-ARG aptopts="-y -qq --no-install-recommends"
 
 RUN apt-get update >/dev/null
 RUN apt-get $aptopts install eatmydata
+
+RUN dpkg-divert --local --rename /usr/bin/py3compile
+RUN dpkg-divert --local --rename /usr/lib/python3.9/py_compile.py
+RUN bash -c "d=/usr/lib/python3.9; mkdir -p \$d; touch \$d/py_compile.py"
+
 RUN apt-get $aptopts install dbus sudo ca-certificates
-RUN apt-get $aptopts install less iproute2 vim-tiny iputils-ping net-tools
+RUN apt-get $aptopts install less iproute2 vim-tiny iputils-ping net-tools procps
 RUN adduser --disabled-login --gecos "" pi
 RUN adduser pi sudo
 RUN apt-get $aptopts install curl jq python3-venv xz-utils
 
+RUN bash -c "f=/usr/lib/python3.9/py_compile.py; rm \$f; \
+	dpkg-divert --remove --local --rename \$f"
+
 RUN rm -f /var/cache/apt/*.bin
+RUN find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
 
 #
 # =========================
@@ -29,7 +43,8 @@ RUN rm -f /var/cache/apt/*.bin
 FROM shared AS build
 
 ARG MODULES="all"
-ARG aptopts="-y -qq --no-install-recommends"
+ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options=--force-confold"
+ARG PYTHONDONTWRITEBYTECODE=1
 
 RUN apt-get $aptopts install git patch
 
@@ -82,15 +97,24 @@ RUN su -l pi -c " \
 		[ ! -e \$reqf ] && reqf=\$reqd/\$mod.txt; \
 		[ ! -e \$reqf ] && continue; \
 		echo \"installing python reqs from \$reqf\"; \
-		pip3 install -U -r \$reqf; \
+		pip3 install --no-compile -U -r \$reqf; \
 	done"
+
+RUN bash -c " \
+	eval \$(grep PKGS_build /home/pi/BirdNET-Pi/scripts/install_services.sh); \
+	apt-get -y install --no-install-recommends $PKGS_build"
+
+RUN rm -f /var/cache/apt/*.bin
+RUN find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
 
 FROM shared AS final
 ARG MODULES="all"
 ARG aptopts="-qq -y --no-install-recommends"
+ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
 ADD --chmod=0755 systemctl3.py /usr/bin/systemctl
+RUN sed -i -e '1c#! /usr/bin/python3 -B' /usr/bin/systemctl
 
 RUN apt-get $aptopts install cron
 
@@ -112,7 +136,7 @@ RUN bash -c "echo 'APT::Install-Recommends "false";' >/etc/apt/apt.conf.d/01no-r
 
 #RUN su -l pi -c "/home/pi/BirdNET-Pi/scripts/install_birdnet.sh"
 RUN su -l pi -c "env my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_config.sh"
-RUN env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_services.sh
+RUN env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi MODULES_SKIP_BUILD=true /home/pi/BirdNET-Pi/scripts/install_services.sh
 RUN su -l pi -c " \
 	my_dir=/home/pi/BirdNET-Pi; \
 	source \$my_dir/birdnet.conf; \
@@ -131,12 +155,25 @@ RUN rm /etc/timezone
 
 # slim down image
 
+RUN bash -c " \
+	for s in \
+			birdnet_analysis.service birdnet_log.service birdnet_recording.service \
+			birdnet_server.service birdnet_stats.service chart_viewer.service \
+			custom_recording.service extraction.service livestream.service \
+			spectrogram_viewer.service; \
+			do \
+		d=/etc/systemd/system/\${s}.d; \
+		mkdir -p \$d; \
+		echo -e \"[Service]\nEnvironment=PYTHONPYCACHEPREFIX=/home/pi/.cache/pycache\" > \
+			\$d/pycache.conf; \
+	done"
+
+
 RUN rm -f /usr/local/lib/ffmpeg/ffprobe
 RUN rm -f /home/pi/BirdNET-Pi/*.whl
-RUN rm -f /home/pi/BirdNET-Pi/models/BirdNET_6K_GLOBAL_MODEL.tflite
+RUN rm -f /home/pi/BirdNET-Pi/model/BirdNET_6K_GLOBAL_MODEL.tflite
 
-RUN apt-get -y remove g++-10 cpp-10 gcc-10 cmake libstdc++-10-dev libc6-dev libasan6 libtsan0 cmake-data binutils-x86-64-linux-gnu linux-libc-dev swig4.0 manpages-dev liblsan0 libubsan1
-
+RUN bash -c "if [ \"$MODULES\" = server ]; then rm -f /home/pi/BirdNET-Pi/scripts/gotty; fi"
 
 RUN findmnt /home/pi/.cache/pip || rm -r /home/pi/.cache/pip
 RUN rm -f /var/cache/apt/*.bin
@@ -150,6 +187,9 @@ RUN bash -c "if [ -e /usr/bin/caddy ]; then \
 			/lib/systemd/system/caddy.service; \
 		setcap cap_net_bind_service=+ep /usr/bin/caddy; \
 	fi"
+
+RUN find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
+RUN echo "" >/etc/python3.9/sitecustomize.py
 
 EXPOSE 80
 ENTRYPOINT ["/usr/bin/systemctl"]
