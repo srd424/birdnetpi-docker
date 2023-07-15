@@ -1,8 +1,29 @@
+#! /bin/bash
+
+profile="combined"
+[ -n "$1" ] && profile="$1"
+
+mods_combined="server main local_recording"
+mods_server="server"
+
+modsvar="mods_$profile"
+
+img_combined="birdnetpi-amd64"
+img_server="bnpi-server"
+
+imgvar="img_$profile"
+
+modules="${!modsvar}"
+imgname="${!imgvar}"
+
+set -x
+
 TMPDIR=~/contbuild/bulk/tmp \
 	buildah bud \
 		-v /vol/pip-cache/birdnet:/home/pi/.cache/pip \
 		-v $PWD/build-cache/apt:/var/cache/apt/archives \
 		-v $PWD/build-cache/git:/home/pi/gitcache \
 		--build-arg apt_proxy="http://fs2.lan:3142/" \
+		--build-arg MODULES="$modules" \
 		 --no-cache --force-rm=false \
-		--tag birdnetpi-amd64:latest
+		--tag $imgname:latest
