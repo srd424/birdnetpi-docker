@@ -1,19 +1,26 @@
 #ctr=$(buildah from debian:bullseye)
 
-FROM debian:bullseye-slim AS build
+FROM debian:bullseye-slim AS shared
 
 ARG apt_proxy
 
 #RUN bash -c "[ -n \"$apt_proxy\" ] && echo \"Acquire::http::proxy \\\"http://$apt_proxy\\\";\" >/etc/apt/apt.conf.d/02proxy"
 RUN findmnt /var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
 RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
+
 RUN apt-get update
 RUN apt-get -y install --no-install-recommends eatmydata
 RUN apt-get -y install --no-install-recommends dbus sudo ca-certificates
 RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
 RUN adduser --disabled-login --gecos "" pi
 RUN adduser pi sudo
-RUN apt-get -y install --no-install-recommends curl git jq python3-venv patch cron
+RUN apt-get -y install --no-install-recommends curl jq python3-venv
+
+RUN rm -f /var/cache/apt/*.bin
+
+FROM shared AS build
+
+RUN apt-get -y install --no-install-recommends git patch
 
 # bind mounting onto /home/pi may create it early with wrong ownership
 RUN chown -R pi:pi /home/pi
@@ -47,22 +54,10 @@ RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/1cbff6d1f57208d03389eb5
 ADD patches/07-ffmpeg-opts.diff /patches
 RUN patch -d /home/pi/BirdNET-Pi -p1 </patches/07-ffmpeg-opts.diff
 
-FROM debian:bullseye-slim
-ARG apt_proxy
-RUN echo proxy $apt_proxy
-RUN findmnt /var/cache/apt/archives && rm /etc/apt/apt.conf.d/docker-clean || true
-RUN [ -n "$apt_proxy" ] && echo "Acquire::http::proxy \"$apt_proxy\";" >/etc/apt/apt.conf.d/02proxy || true
-
+FROM shared AS final
 ADD --chmod=0755 systemctl3.py /usr/bin/systemctl
 
-
-RUN apt-get update
-RUN apt-get -y install --no-install-recommends eatmydata
-RUN apt-get -y install --no-install-recommends dbus sudo ca-certificates
-RUN apt-get -y install --no-install-recommends less iproute2 vim-tiny iputils-ping net-tools
-RUN adduser --disabled-login --gecos "" pi
-RUN adduser pi sudo
-RUN apt-get -y install --no-install-recommends curl jq python3-venv patch cron
+RUN apt-get -y install --no-install-recommends cron
 
 COPY --from=build /home/pi/BirdNET-Pi /home/pi/BirdNET-Pi
 #RUN rm -r /home/pi/BirdNET-Pi/.git
