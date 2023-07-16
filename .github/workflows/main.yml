@@ -25,7 +25,8 @@ jobs:
           bnpi
     - name: Build with buildah
       run: |
-        mkdir -p cache/pip cache/apt cache/git && \
+        mkdir -p cache/pip cache/apt cache/git \
+		cache/apt-lists && \
         buildah bud \
           -v $PWD/cache/apt:/var/cache/apt/archives \
           -v $PWD/cache/pip:/home/pi/.cache/pip \
