@@ -6,7 +6,7 @@ on:
 env:
   REGISTRY: ghcr.io
 #  IMAGE_NAME: ${{ github.repository }}
-  IMAGE_NAME: srd424/birdnetpi-amd64
+  IMAGE_NAME: srd424/bnpi-server
   
 jobs:
   builder-build:
@@ -18,9 +18,9 @@ jobs:
       uses: actions/cache@v3
       with:
         path: cache
-        key: bnpi0-main
+        key: bnpi0-modules
         restore-keys: |
-          bnpi0-main
+          bnpi0-modules
           bnpi0-
           bnpi
     - name: Build with buildah
@@ -29,8 +29,10 @@ jobs:
         buildah bud \
           -v $PWD/cache/apt:/var/cache/apt/archives \
           -v $PWD/cache/pip:/home/pi/.cache/pip \
+          -v $PWD/cache/apt-lists:/var/lib/apt/lists \
           -v $PWD/cache/git:/home/pi/gitcache \
-          --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} .
+          --build-arg MODULES="server" \
+          --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64 .
     - name: fix cache ownership
       run: sudo bash -c "chown -v -R \$SUDO_USER cache"
     - name: Log in to the Container registry
@@ -40,4 +42,4 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish image
-      run: podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      run: podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64
