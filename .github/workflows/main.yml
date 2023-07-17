@@ -44,3 +44,5 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish image
       run: podman push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:amd64
+
+# vim: set ts=2 et sw=2: ai 
