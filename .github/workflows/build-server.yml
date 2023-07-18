@@ -1,4 +1,4 @@
-name: build birdnetpi docker
+name: build server
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: srd424/bnpi-server
   
 jobs:
-  builder-build:
+  build-server:
     runs-on: ubuntu-20.04
     steps:
     - name: Checkout source
