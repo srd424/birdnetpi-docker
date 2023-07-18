@@ -182,7 +182,7 @@ RUN bash -c "d=/etc/systemd/system//php7.4-fpm.service.d; mkdir \$d && echo -e '
 
 RUN bash -c "if [ -e /usr/bin/caddy ]; then \
 		sed -i -r \
-			-e 's|^ExecStart=(.*)$|ExecStart=/sbin/capsh --user=caddy -- -c "\1"|' \
+			-e 's|^ExecStart=(.*)$|ExecStart=/sbin/capsh --user=caddy -- -c \"\1\"|' \
 			-e '/^(User|Group)/d' \
 			/lib/systemd/system/caddy.service; \
 		setcap cap_net_bind_service=+ep /usr/bin/caddy; \
