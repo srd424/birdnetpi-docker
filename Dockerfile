@@ -101,8 +101,16 @@ RUN su -l pi -c " \
 	done"
 
 RUN bash -c " \
-	eval \$(grep PKGS_build /home/pi/BirdNET-Pi/scripts/install_services.sh); \
-	apt-get -y install --no-install-recommends $PKGS_build"
+	set -x; \
+	source /home/pi/BirdNET-Pi/scripts/set_modules.sh; \
+	source /home/pi/BirdNET-Pi/scripts/modules_info.sh; \
+	source /home/pi/BirdNET-Pi/scripts/install_caddy.sh; \
+	apt-get -y install --no-install-recommends \$PKGS_build; \
+	filter_pkg CADDY caddy; \
+	\$NEED_CADDY && HOME=/home/pi install_caddy_build_pre; \
+	apt-get -y update && apt-get -y upgrade; \
+	\$NEED_CADDY && HOME=/home/pi install_caddy_build; \
+	"
 
 RUN rm -f /var/cache/apt/*.bin
 RUN find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v

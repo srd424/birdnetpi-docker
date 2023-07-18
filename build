@@ -26,6 +26,7 @@ TMPDIR=~/contbuild/bulk/tmp \
 		-v $PWD/build-cache/apt:/var/cache/apt/archives \
 		-v $PWD/build-cache/apt-lists:/var/lib/apt/lists \
 		-v $PWD/build-cache/git:/home/pi/gitcache \
+		-v $PWD/build-cache/caddy:/home/pi/.cache/caddy \
 		--build-arg apt_proxy="http://fs2.lan:3142/" \
 		--build-arg MODULES="$modules" \
 		 --no-cache --force-rm=false \
