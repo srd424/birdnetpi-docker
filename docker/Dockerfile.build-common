@@ -1,0 +1,12 @@
+FROM bnpi-base AS build
+
+ARG MODULES="all"
+ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options=--force-confold"
+ARG PYTHONDONTWRITEBYTECODE=1
+
+ARG FORK=srd424
+ARG BRANCH=modules
+
+ADD --chmod=0644 build /build-scripts
+RUN bash -x /build-scripts/build-common.sh
+

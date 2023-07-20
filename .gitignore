@@ -1,2 +1,8 @@
 build.log
 build-cache
+logs
+.base
+.build-common
+.common
+.server
+.site-main

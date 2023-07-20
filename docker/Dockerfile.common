@@ -1,0 +1,75 @@
+FROM bnpi-build-common AS build
+
+FROM bnpi-base AS final
+ARG MODULES="common"
+ARG aptopts="-qq -y --no-install-recommends"
+ARG PYTHONDONTWRITEBYTECODE=1
+RUN echo "modules is $MODULES"
+
+ADD --chmod=0755 systemctl3.py /usr/bin/systemctl
+COPY --from=build /home/pi/BirdNET-Pi /home/pi/BirdNET-Pi
+ADD --chmod=0644 build /build-scripts
+RUN bash -x /build-scripts/common.sh
+
+#RUN sed -i -e '1c#! /usr/bin/python3 -B' /usr/bin/systemctl
+#
+##RUN rm -r /home/pi/BirdNET-Pi/.git
+##RUN findmnt /home/pi/gitcache || rm -r /home/pi/gitcache
+#RUN chown -R pi:pi /home/pi
+#
+##RUN echo INSTALL_PULSEAUDIO=false >/home/pi/BirdNET-Pi/birdnet.conf.override
+##RUN echo INSTALL_FFMPEG=static >>/home/pi/BirdNET-Pi/birdnet.conf.override
+#RUN echo "MODULES_ENABLED=\"$MODULES\"" >>/home/pi/BirdNET-Pi/birdnet.conf.override
+#RUN cat /home/pi/BirdNET-Pi/birdnet.conf.override
+#
+#
+#RUN echo '%sudo ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/nopasswd
+#RUN echo '/usr/lib/x86_64-linux-gnu/libeatmydata.so.1' >>/etc/ld.so.preload
+#
+#RUN bash -c "echo 'APT::Install-Recommends "false";' >/etc/apt/apt.conf.d/01no-recommends"
+#
+##RUN su -l pi -c "/home/pi/BirdNET-Pi/scripts/install_birdnet.sh"
+#RUN su -l pi -c "env my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_config.sh"
+#RUN env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi MODULES_SKIP_BUILD=true /home/pi/BirdNET-Pi/scripts/install_services.sh
+#RUN su -l pi -c " \
+#	my_dir=/home/pi/BirdNET-Pi; \
+#	source \$my_dir/birdnet.conf; \
+#	mkdir -p \${RECS_DIR}; \
+#	cd \$my_dir/scripts; \
+#	./install_language_label_nm.sh -l \$DATABASE_LANG"
+#
+#RUN bash -c 'f=BirdDB.txt;			d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
+#RUN bash -c 'f=apprise.txt;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
+#RUN bash -c 'f=birdnet.conf;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
+#RUN bash -c 'f=exclude_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
+#RUN bash -c 'f=include_species_list.txt;	d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f'
+#RUN bash -c 'f=birds.db;	d=/home/pi/BirdNET-Pi/scripts; rm -f $d/$f && ln -s /state/$f $d/$f'
+#
+#RUN rm /etc/timezone
+#
+## slim down image
+#
+#RUN bash -c " \
+#	for s in \
+#			birdnet_analysis.service birdnet_log.service birdnet_recording.service \
+#			birdnet_server.service birdnet_stats.service chart_viewer.service \
+#			custom_recording.service extraction.service livestream.service \
+#			spectrogram_viewer.service; \
+#			do \
+#		d=/etc/systemd/system/\${s}.d; \
+#		mkdir -p \$d; \
+#		echo -e \"[Service]\nEnvironment=PYTHONPYCACHEPREFIX=/home/pi/.cache/pycache\" > \
+#			\$d/pycache.conf; \
+#	done"
+#
+#
+#RUN rm -f /usr/local/lib/ffmpeg/ffprobe
+#RUN rm -f /home/pi/BirdNET-Pi/*.whl
+#RUN rm -f /home/pi/BirdNET-Pi/model/BirdNET_6K_GLOBAL_MODEL.tflite
+#
+#RUN findmnt /home/pi/.cache/pip || rm -r /home/pi/.cache/pip
+#RUN rm -f /var/cache/apt/*.bin
+#
+#RUN find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
+#
+ENTRYPOINT ["/usr/bin/systemctl"]
