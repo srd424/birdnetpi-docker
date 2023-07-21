@@ -1,0 +1,93 @@
+cd birdnet
+ls
+cd bin/
+ls
+. activate
+pip install pipdeptree pipgrip
+pipdeptree --help
+pipdeptree
+pipdeptree | less
+cd ../../reqs/
+grep mqtt *
+fg
+pipgrip --help
+pipgrip -r common.txt server.txt 
+ls -l /home/pi/.cache/pip
+ls -l /home/pi/.cache/
+source birdnet/bin/activate
+ls
+cd reqs/
+pipgrip -r common.txt server.txt 
+pipgrip -r common.txt -r server.txt 
+cat >server-deps
+pipgrip -r common.txt -r main.txt | tee main-deps
+ls -ltr
+sort server-deps 
+sort server-deps >server-deps.s
+sort main-deps >main-deps.s
+uniq --help
+cart main-deps server-deps | sort | uniq -d
+cat main-deps server-deps | sort | uniq -d
+grep libr *-deps
+grep numba *-deps
+pipgrip --help
+cat main-deps server-deps 
+cat main-deps server-deps | sed -e 's/==.*$/'
+cat main-deps server-deps | sed -e 's/==.*$//'
+cat main-deps server-deps | sed -e 's/==.*$//' | sort | uniq -d
+cat main-deps server-deps | sed -e 's/==.*$//' | sort | uniq -c
+cat main-deps server-deps | sed -e 's/==.*$//' | sort | uniq -c | sort -n
+cat main-deps server-deps | sed -e 's/==.*$//' | sort | uniq -c | sort -n -r
+pipgrip --tree -r common.txt -r main.txt | tee main.tree
+pipgrip --tree -r common.txt -r server.txt | tee server.tree
+bg
+fg
+pipgrip --tree-ascii -r common.txt -r server.txt | tee server.tree && pipgrip --tree-ascii -r common.txt -r main.txt | tee main.tree
+ls -ltr
+grep '^. --' server.tree 
+grep '^.--' server.tree 
+grep '^.--' server.tree | sed -e 's/^....(.*)[ >!=].*$/\1/'
+grep '^.--' server.tree | sed -re 's/^....(.*)[ >!=].*$/\1/'
+grep '^.--' server.tree | wc -l
+grep '^.--' server.tree | sed -re 's/^....(.*)[ >!=].*$/\1/' | wc -l
+grep '^.--' server.tree | sed -re 's/^....(.*)[ >!=].* .*$/\1/' | wc -l
+grep '^.--' server.tree | sed -re 's/^....(.*)[ >!=].* .*$/\1/' 
+grep '^.--' server.tree | sed -re 's/^....(.*)[ >!=].*$/\1/' | wc -l
+grep '^.--' server.tree | sed -re 's/^....(.*)[ >!=].*$/\1/' 
+grep '^.--' server.tree | sed -re 's/^....([^ >!=]*).*$/\1/' 
+grep '^.--' server.tree | sed -re 's/^....([^ ><!=]*).*$/\1/' 
+grep '^.--' server.tree | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort
+grep '^.--' server.tree | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort >server.top
+grep '^.--' main.tree | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort 
+grep '^.--' main.tree # | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort 
+grep '^.--' main.tree | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort 
+grep '^.--' main.tree | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort | uniq
+grep '^.--' main.tree | sed -re 's/^....([^ ><!=]*).*$/\1/'  | sort | uniq >main.top
+cat *.top | sort | uniq -d
+cat main-deps server-deps | sed -e 's/==.*$//' | sort | uniq -d
+cat *.top | sort | uniq -d
+grep py *.tree
+cat *.top | sort | uniq -d
+grep numba *
+less server.tree 
+grep numba *
+less server.tree
+grep -5 numb main.tree 
+cat *.top | sort | uniq -d
+jobs
+fg
+ls
+cd reqs/
+ls
+pipgrip -r common.txt -r server.txt -r main.txt
+. ../birdnet/bin/activate
+pipgrip -r common.txt -r server.txt -r main.txt
+pip --help
+pip --help | less
+pip show
+pip show numpy
+ls -ltr
+less server.tree
+fg
+less main.tree 
+jobs

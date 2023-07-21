@@ -24,6 +24,30 @@ main () {
 	apt-get -y update && apt-get -y upgrade
 	$NEED_CADDY && HOME=/home/pi install_caddy_build
 
+	cat >>/home/pi/BirdNET-Pi/reqs/common.txt <<EOF
+attrs
+audioread
+click
+decorator
+iniconfig
+joblib
+lazy-loader
+msgpack
+numba
+numpy
+packaging
+pluggy
+pooch
+py
+pytest
+requests
+scikit-learn
+scipy
+soundfile
+soxr
+tomli
+typing-extensions
+EOF
 	su -l pi -c "/bin/bash /build-scripts/pip.sh"
 
 	rm -f /var/cache/apt/*.bin

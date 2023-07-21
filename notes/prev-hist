@@ -1,0 +1,10 @@
+ID            CREATED            CREATED BY                                     SIZE        COMMENT
+b153ab671519  13 minutes ago     |5 MODULES="server" PYTHONDONTWRITEBYTECOD...  386 MB      FROM localhost/bnpi-common:latest
+<missing>     26 minutes ago     /bin/sh -c #(nop) ENTRYPOINT ["/usr/bin/sy...  83.4 MB     FROM localhost/bnpi-base:latest
+<missing>     About an hour ago  |8 MODULES=all PYTHONDONTWRITEBYTECODE=1 a...  43.7 MB     FROM docker.io/library/debian:bullseye-slim
+<missing>     2 weeks ago        /bin/sh -c #(nop) ADD file:4a063d4e089ef10...  84 MB       
+ID            CREATED            CREATED BY                                     SIZE        COMMENT
+23a24adc2176  10 minutes ago     |5 MODULES="main" PYTHONDONTWRITEBYTECODE=...  743 MB      FROM localhost/bnpi-common:latest
+<missing>     26 minutes ago     /bin/sh -c #(nop) ENTRYPOINT ["/usr/bin/sy...  83.4 MB     FROM localhost/bnpi-base:latest
+<missing>     About an hour ago  |8 MODULES=all PYTHONDONTWRITEBYTECODE=1 a...  43.7 MB     FROM docker.io/library/debian:bullseye-slim
+<missing>     2 weeks ago        /bin/sh -c #(nop) ADD file:4a063d4e089ef10...  84 MB       
