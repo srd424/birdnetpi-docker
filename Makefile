@@ -6,11 +6,11 @@ server: .server
 
 common: .common
 
-.site-main: .common docker/Dockerfile.site-main build/site-main.sh build/build-site-main.sh
+.site-main: .common docker/Dockerfile.site-main build/final.sh build/build-site-main.sh
 	MODULES=main ./docker.sh site-main
 	touch .site-main
 
-.server: .common docker/Dockerfile.server build/server.sh build/build-server.sh
+.server: .common docker/Dockerfile.server build/final.sh build/build-server.sh
 	MODULES=server ./docker.sh server
 	touch .server
 

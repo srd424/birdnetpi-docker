@@ -19,6 +19,7 @@ RUN du -sch /home/pi/BirdNET-Pi/birdnet
 COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
 RUN du -sch /home/pi/BirdNET-Pi/birdnet
 ADD --chmod=0644 build /build-scripts
-RUN bash -x /build-scripts/server.sh
+RUN bash -x /build-scripts/final.sh
 
+RUN rm -f /home/pi/BirdNET-Pi/scripts/gotty
 

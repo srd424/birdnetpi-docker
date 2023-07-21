@@ -5,15 +5,8 @@ set -x
 
 OPTS=""
 
-addopt () {
-#	[ -n "$OPTS" ] &&
- OPTS="${OPTS} "
-	OPTS="${OPTS}$*"
-}
-
 if [ -n "$MODULES" ]; then
-	#OPTS="${OPTS} --build-arg MODULES=\"$MODULES\""
-	addopt --build-arg MODULES=\"$MODULES\"
+	OPTS="${OPTS} --build-arg \"MODULES=$MODULES\""
 fi
 
 export TMPDIR=~/contbuild/bulk/tmp
@@ -22,7 +15,7 @@ IMG=$1
 
 set -o pipefail
 
-buildah bud \
+eval buildah bud \
 	-v /vol/pip-cache/birdnet:/home/pi/.cache/pip \
 	-v $PWD/build-cache/apt:/var/cache/apt/archives \
 	-v $PWD/build-cache/apt-lists:/var/lib/apt/lists \
@@ -32,4 +25,4 @@ buildah bud \
 	 --no-cache --force-rm=false \
 	-f docker/Dockerfile.$IMG \
 	--tag bnpi-$IMG:latest \
-	$OPTS | tee logs/$IMG.log
+	$OPTS 2>&1 | tee logs/$IMG.log

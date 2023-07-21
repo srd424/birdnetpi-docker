@@ -8,10 +8,11 @@ sed -i -e '1c#! /usr/bin/python3 -B' /usr/bin/systemctl
 #RUN findmnt /home/pi/gitcache || rm -r /home/pi/gitcache
 chown -R pi:pi /home/pi
 
-#RUN echo INSTALL_PULSEAUDIO=false >/home/pi/BirdNET-Pi/birdnet.conf.override
-#RUN echo INSTALL_FFMPEG=static >>/home/pi/BirdNET-Pi/birdnet.conf.override
-echo "MODULES_ENABLED=\"$MODULES\"" >>/home/pi/BirdNET-Pi/birdnet.conf.override
-cat /home/pi/BirdNET-Pi/birdnet.conf.override
+##RUN echo INSTALL_PULSEAUDIO=false >/home/pi/BirdNET-Pi/birdnet.conf.override
+##RUN echo INSTALL_FFMPEG=static >>/home/pi/BirdNET-Pi/birdnet.conf.override
+#echo "MODULES_ENABLED=\"$MODULES\"" >>/home/pi/BirdNET-Pi/birdnet.conf.override
+#cat /home/pi/BirdNET-Pi/birdnet.conf.override
+touch /home/pi/BirdNET-Pi/birdnet.conf.override
 
 
 echo '%sudo ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/nopasswd
@@ -21,7 +22,10 @@ bash -c "echo 'APT::Install-Recommends "false";' >/etc/apt/apt.conf.d/01no-recom
 
 #RUN su -l pi -c "/home/pi/BirdNET-Pi/scripts/install_birdnet.sh"
 su -l pi -c "env my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_config.sh"
-env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi MODULES_SKIP_BUILD=true /home/pi/BirdNET-Pi/scripts/install_services.sh
+env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi \
+	MODULES_SKIP_BUILD=true \
+	MODULES_ENABLED="common" \
+	/home/pi/BirdNET-Pi/scripts/install_services.sh
 su -l pi -c " \
 	my_dir=/home/pi/BirdNET-Pi; \
 	source \$my_dir/birdnet.conf; \

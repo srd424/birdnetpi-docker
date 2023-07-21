@@ -1,7 +1,7 @@
 FROM bnpi-build-common AS build
 
 ARG MODULES="site-main"
-ARG aptopts="-qq -y --no-install-recommends"
+ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
@@ -11,7 +11,7 @@ RUN du -sch /home/pi/BirdNET-Pi/birdnet
 
 FROM bnpi-common AS final
 ARG MODULES="site-main"
-ARG aptopts="-qq -y --no-install-recommends"
+ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
@@ -19,6 +19,6 @@ RUN du -sch /home/pi/BirdNET-Pi/birdnet
 COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
 RUN du -sch /home/pi/BirdNET-Pi/birdnet
 ADD --chmod=0644 build /build-scripts
-RUN bash -x /build-scripts/site-main.sh
+RUN bash -x /build-scripts/final.sh
 
 
