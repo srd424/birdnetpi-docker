@@ -15,8 +15,9 @@ IMG=$1
 
 set -o pipefail
 
+#	 --no-cache --force-rm=false \
+
 eval buildah bud \
-	 --no-cache --force-rm=false \
 	-f docker/Dockerfile.$IMG \
 	--tag bnpi-$IMG:latest \
 	$OPTS 2>&1 | tee logs/$IMG.log
