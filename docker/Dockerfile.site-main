@@ -17,8 +17,8 @@ RUN echo "modules is $MODULES"
 COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
 ADD --chmod=0644 build /build-scripts
 RUN rm -r /etc/caddy
-RUN bash -x /build-scripts/final.sh
 RUN eatmydata apt-get $aptopts install cron
+RUN bash -x /build-scripts/final.sh
 
 RUN bash -c "if [ -e /usr/bin/caddy ]; then \
                 sed -i -r \
