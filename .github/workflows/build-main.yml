@@ -26,8 +26,8 @@ jobs:
     - name: Build all with buildah
       run: |
         mkdir -p cache/pip cache/apt cache/git \
-          cache/apt-lists cache/caddy && \
-        make OPTSFILE=gha \
+          cache/apt-lists cache/caddy logs && \
+        make OPTSFILE=gha
     - name: fix cache ownership
       run: sudo bash -c "chown -v -R \$SUDO_USER cache"
     - name: Log in to the Container registry
