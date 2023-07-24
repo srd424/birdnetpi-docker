@@ -37,7 +37,7 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish site-main
-      run: podman push ${{ env.REGISTRY }}/bnpi-site-main:amd64
+      run: podman push bnpi-site-main:latest ${{ env.REGISTRY }}/bnpi-site-main:amd64
     - name: Publish server
-      run: podman push ${{ env.REGISTRY }}/bnpi-server:amd64
+      run: podman push bnpi-server:latest ${{ env.REGISTRY }}/bnpi-server:amd64
 # vim: set ts=2 et sw=2: ai 
