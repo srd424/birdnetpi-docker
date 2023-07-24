@@ -4,4 +4,5 @@ OPTS=" \
           -v $PWD/cache/apt-lists:/var/lib/apt/lists \
           -v $PWD/cache/git:/home/pi/gitcache \
           -v $PWD/cache/caddy:/home/pi/.cache/caddy \
+	  --build-arg apt_proxy=\"/\" \
 	"
