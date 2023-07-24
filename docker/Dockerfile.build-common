@@ -8,5 +8,6 @@ ARG FORK=srd424
 ARG BRANCH=modules
 
 ADD --chmod=0644 build /build-scripts
+ADD --chmod=0644 patches /patches
 RUN bash -x /build-scripts/build-common.sh
 

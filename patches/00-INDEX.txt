@@ -1,0 +1,7 @@
+01 - https://github.com/mcguirepr89/BirdNET-Pi/pull/970 - check disk usage on correct filesystem
+02 - https://github.com/mcguirepr89/BirdNET-Pi/pull/974 - make pulseaudio optional
+03 -
+04 - allow overriding config
+05 - https://github.com/MatthewBCooke/BirdNET-Pi/pull/13 - use tflite not full tensorflow
+06 - static ffmpeg
+07 - ffmpeg recording extra opts (for RTSP transport forcing, etc)

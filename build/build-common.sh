@@ -14,6 +14,7 @@ main () {
 			git clone --separate-git-dir /home/pi/gitcache/$FORK/git -b $BRANCH --depth=1 https://github.com/srd424/BirdNET-Pi.git /home/pi/BirdNET-Pi;  \
 		fi"
 
+	apply_patches
 
 	source /home/pi/BirdNET-Pi/scripts/set_modules.sh
 	source /home/pi/BirdNET-Pi/scripts/modules_info.sh
@@ -50,13 +51,18 @@ typing-extensions
 EOF
 	su -l pi -c "/bin/bash /build-scripts/pip.sh"
 
+	rm -r -f /patches
+
 	rm -f /var/cache/apt/*.bin
 	find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
 }
 
 apply_patches () {
-	curl -s 'https://patch-diff.githubusercontent.com/raw/mcguirepr89/BirdNET-Pi/pull/970.diff' | \
-		patch -d /home/pi/BirdNET-Pi -p1
+
+	su -l pi -c " \
+		curl -s 'https://patch-diff.githubusercontent.com/raw/mcguirepr89/BirdNET-Pi/pull/970.diff' | \
+			patch -d /home/pi/BirdNET-Pi -p1; \
+			"
 	#RUN curl -s 'https://patch-diff.githubusercontent.com/raw/mcguirepr89/BirdNET-Pi/pull/974.diff' | \
 	#	patch -d /home/pi/BirdNET-Pi -p1
 
@@ -73,7 +79,9 @@ apply_patches () {
 	#RUN curl -s 'https://github.com/srd424/BirdNET-Pi/commit/1cbff6d1f57208d03389eb5cfd4dd065a7359449.diff' | \
 	#	patch -d /home/pi/BirdNET-Pi -p1
 
-	patch -d /home/pi/BirdNET-Pi -p1 </patches/07-ffmpeg-opts.diff
+	su -l pi -c " \
+		patch -d /home/pi/BirdNET-Pi -p1 </patches/07-ffmpeg-opts.diff \
+		"
 }
 
 main "$@"
