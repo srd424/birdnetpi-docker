@@ -1,3 +1,5 @@
+export OPTSFILE=sd
+
 all: site-main server
 
 site-main: .site-main

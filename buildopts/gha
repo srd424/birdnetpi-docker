@@ -1,0 +1,7 @@
+OPTS=" \
+        -v $PWD/cache/apt:/var/cache/apt/archives \
+          -v $PWD/cache/pip:/home/pi/.cache/pip \
+          -v $PWD/cache/apt-lists:/var/lib/apt/lists \
+          -v $PWD/cache/git:/home/pi/gitcache \
+          -v $PWD/cache/caddy:/home/pi/.cache/caddy \
+	"

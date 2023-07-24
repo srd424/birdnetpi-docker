@@ -1,0 +1,9 @@
+OPTS="	-v /vol/pip-cache/birdnet:/home/pi/.cache/pip \
+	-v $PWD/build-cache/apt:/var/cache/apt/archives \
+	-v $PWD/build-cache/apt-lists:/var/lib/apt/lists \
+	-v $PWD/build-cache/git:/home/pi/gitcache \
+	-v $PWD/build-cache/caddy:/home/pi/.cache/caddy \
+	--build-arg apt_proxy=\"http://fs2.lan:3142/\" \
+	"
+
+export TMPDIR=~/contbuild/bulk/tmp
