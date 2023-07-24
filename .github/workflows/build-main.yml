@@ -10,7 +10,7 @@ env:
   
 jobs:
   build-all:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - name: Checkout source
       uses: actions/checkout@v2
@@ -27,6 +27,7 @@ jobs:
       run: |
         mkdir -p cache/pip cache/apt cache/git \
           cache/apt-lists cache/caddy logs && \
+          buildah --version && \
         make OPTSFILE=gha
     - name: fix cache ownership
       run: sudo bash -c "chown -v -R \$SUDO_USER cache"
