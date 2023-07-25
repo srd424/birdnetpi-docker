@@ -9,11 +9,14 @@ OPTS=" \
 
 #buildah info
 #
-#fuse-overlayfs --version
+fuse-overlayfs --version
 #
 #export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
 rm -r $XDG_RUNTIME_DIR/containers
-export STORAGE_OPTS="overlay.mountopt=metacopy=on"
+
+
+#causes outright build failure
+#export STORAGE_OPTS="overlay.mountopt=metacopy=on"
 buildah info
 
 
