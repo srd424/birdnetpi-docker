@@ -7,10 +7,10 @@ OPTS=" \
 	  --build-arg apt_proxy=\"/\" \
 	"
 
-buildah info
-
-fuse-overlayfs --version
-
+#buildah info
+#
+#fuse-overlayfs --version
+#
 #export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
 export STORAGE_OPTS="overlay.mountopt=metacopy=on"
 buildah info
