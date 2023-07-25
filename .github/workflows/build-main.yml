@@ -5,10 +5,7 @@ on:
   
 env:
   REGISTRY: ghcr.io/srd424
-#  IMAGE_NAME: ${{ github.repository }}
-  IMAGE_NAME: srd424/bnpi-site-main
   IMAGE_TAG: amd64
-#  IMAGE_TAG: layered
   
 jobs:
   build-all:
