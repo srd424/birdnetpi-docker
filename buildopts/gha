@@ -11,7 +11,8 @@ OPTS=" \
 #
 fuse-overlayfs --version
 #
-export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
+#export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
+export STORAGE_OPTS="overlay.mount_program=/usr/local/bin/fuse-overlayfs"
 rm -r $XDG_RUNTIME_DIR/containers
 
 
