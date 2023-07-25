@@ -14,3 +14,4 @@ which fuse-overlayfs
 ls -l /usr/bin/fuse-overlayfs
 
 export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
+buildah info
