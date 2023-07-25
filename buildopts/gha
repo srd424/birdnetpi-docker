@@ -9,9 +9,8 @@ OPTS=" \
 
 buildah info
 
-type fuse-overlayfs
-which fuse-overlayfs
-ls -l /usr/bin/fuse-overlayfs
+fuse-overlayfs --version
 
-export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
+#export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
+export STORAGE_OPTS="overlay.mountopt=metacopy=on"
 buildah info
