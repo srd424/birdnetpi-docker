@@ -6,3 +6,11 @@ OPTS=" \
           -v $PWD/cache/caddy:/home/pi/.cache/caddy \
 	  --build-arg apt_proxy=\"/\" \
 	"
+
+buildah info
+
+type fuse-overlayfs
+which fuse-overlayfs
+ls -l /usr/bin/fuse-overlayfs
+
+export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
