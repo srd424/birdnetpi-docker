@@ -14,6 +14,12 @@ jobs:
   build-all:
     runs-on: ubuntu-22.04
     steps:
+    - name: install new fuse-overlayfs
+      run: |
+        sudo dpkg-divert --local --rename /usr/bin/fuse-overlayfs && \
+          curl -L https://github.com/containers/fuse-overlayfs/releases/download/v1.12/fuse-overlayfs-x86_64 -o /tmp/fuse-overlayfs && \
+          sudo mv /tmp/fuse-overlayfs /usr/local/bin && \
+          sudo chmod a+x /usr/local/bin/fuse-overlayfs
     - name: Checkout source
       uses: actions/checkout@v2
     - name: cache build cache
