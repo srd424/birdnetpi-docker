@@ -7,18 +7,4 @@ OPTS=" \
 	  --build-arg apt_proxy=\"/\" \
 	"
 
-#buildah info
-#
-fuse-overlayfs --version
-#
-#export STORAGE_OPTS="overlay.mount_program=/usr/bin/fuse-overlayfs"
 export STORAGE_OPTS="overlay.mount_program=/usr/local/bin/fuse-overlayfs"
-rm -r $XDG_RUNTIME_DIR/containers
-
-
-#causes outright build failure
-#export STORAGE_OPTS="overlay.mountopt=metacopy=on"
-buildah info
-
-
-ls -lR $XDG_RUNTIME_DIR/containers

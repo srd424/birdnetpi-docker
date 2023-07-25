@@ -1,4 +1,4 @@
-name: build site-main
+name: build all
 
 on:
   workflow_dispatch:
