@@ -25,6 +25,7 @@ su -l pi -c "env my_dir=/home/pi/BirdNET-Pi /home/pi/BirdNET-Pi/scripts/install_
 env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi \
 	MODULES_SKIP_BUILD=true \
 	MODULES_ENABLED="common" \
+	DEBIAN_FRONTEND=noninteractive \
 	/home/pi/BirdNET-Pi/scripts/install_services.sh
 su -l pi -c " \
 	my_dir=/home/pi/BirdNET-Pi; \
@@ -54,8 +55,11 @@ for s in \
 	mkdir -p $d
 	echo -e "[Service]\nEnvironment=PYTHONPYCACHEPREFIX=/home/pi/.cache/pycache" > \
 		$d/pycache.conf
+	echo -e "[Unit]\nRequires=create_config.service\nAfter=create_config.service" > \
+			$d/config.conf
 done
 
+systemctl enable create_config
 
 rm -f /usr/local/lib/ffmpeg/ffprobe
 rm -f /home/pi/BirdNET-Pi/*.whl
@@ -65,3 +69,5 @@ findmnt /home/pi/.cache/pip || rm -r /home/pi/.cache/pip
 rm -f /var/cache/apt/*.bin
 
 find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
+
+mkdir /state

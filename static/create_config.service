@@ -1,0 +1,6 @@
+[Service]
+ExecStart=/usr/local/bin/create_config.sh
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target

@@ -16,11 +16,11 @@ common: .common
 	MODULES=server ./docker.sh server
 	touch .server
 
-.build-common: .base docker/Dockerfile.build-common build/build-common.sh
+.build-common: .base docker/Dockerfile.build-common build/build-common.sh patches
 	MODULES=common ./docker.sh build-common
 	touch .build-common
 
-.common: .base .build-common docker/Dockerfile.common build/common.sh
+.common: .base .build-common docker/Dockerfile.common build/common.sh static
 	MODULES=common ./docker.sh common
 	touch .common
 

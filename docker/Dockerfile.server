@@ -22,4 +22,3 @@ ADD --chmod=0644 build /build-scripts
 RUN bash -x /build-scripts/final.sh
 
 RUN rm -f /home/pi/BirdNET-Pi/scripts/gotty
-

@@ -1,0 +1,22 @@
+diff --git a/scripts/install_config.sh b/scripts/install_config.sh
+index 5690866..481e0b2 100755
+--- a/scripts/install_config.sh
++++ b/scripts/install_config.sh
+@@ -8,8 +8,15 @@ echo "Beginning $0"
+ birdnet_conf=$my_dir/birdnet.conf
+ 
+ # Retrieve latitude and longitude from web
+-LATITUDE=0.0000
+-LONGITUDE=0.0000
++json=$(curl -s4 http://ip-api.com/json)
++if [ "$(echo "$json" | jq -r .status)" = "success" ]; then
++  LATITUDE=$(echo "$json" | jq .lat)
++  LONGITUDE=$(echo "$json" | jq .lon)
++else
++  echo -e "\033[33mCouldn't set latitude and longitude automatically, you will need to do this manually from the web interface by navigating to Tools -> Settings -> Location.\033[0m"
++  LATITUDE=0.0000
++  LONGITUDE=0.0000
++fi
+ 
+ install_config() {
+   cat << EOF > $birdnet_conf

@@ -1,4 +1,5 @@
 main () {
+	export DEBIAN_FRONTEND=noninteractive
 	apt-get $aptopts install git patch
 
 	# bind mounting onto /home/pi may create it early with wrong ownership
@@ -81,6 +82,9 @@ apply_patches () {
 
 	su -l pi -c " \
 		patch -d /home/pi/BirdNET-Pi -p1 </patches/07-ffmpeg-opts.diff \
+		"
+	su -l pi -c " \
+		patch -d /home/pi/BirdNET-Pi -p1 </patches/08-config-auto-location.diff \
 		"
 }
 
