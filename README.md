@@ -4,6 +4,8 @@ Docker adaptation of [BirdNET-Pi](https://github.com/mcguirepr89/BirdNET-Pi) - c
 
 ## Changelog ##
 
+**29-Jul-2023:** the streamlit analysis app ("Species Stats") now works again.
+
 **28-Jul-2023:** there's now a "modularized" version of this, see [this discussion thread](https://github.com/mcguirepr89/BirdNET-Pi/discussions/984). It seems to be basically stable and useful now, I need to properly update this documentation to reflect.
 
 **13-Jul-2023:** Removed systemd to make it work sanely with docker; this is now merged into main branch and package, and again, I'm running it 'in prod' with no problems .. yet.
