@@ -46,4 +46,6 @@ jobs:
       run: podman push bnpi-site-main:latest ${{ env.REGISTRY }}/bnpi-site-main:${{ env.IMAGE_TAG }}
     - name: Publish server
       run: podman push bnpi-server:latest ${{ env.REGISTRY }}/bnpi-server:${{ env.IMAGE_TAG }}
+    - name: Publish streamlit
+      run: podman push bnpi-site-streamlit:latest ${{ env.REGISTRY }}/bnpi-site-streamlit:${{ env.IMAGE_TAG }}
 # vim: set ts=2 et sw=2: ai 
