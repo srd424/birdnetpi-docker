@@ -1,3 +1,5 @@
+set -ex
+
 main () {
 	export DEBIAN_FRONTEND=noninteractive
 	apt-get $aptopts install git patch
@@ -5,11 +7,13 @@ main () {
 	# bind mounting onto /home/pi may create it early with wrong ownership
 	chown -R pi:pi /home/pi
 
-	su -l pi -c "if [ -d /home/pi/gitcache/$FORK/git ]; then \
-			git --git-dir /home/pi/gitcache/$FORK/git fetch;  \
+	su -l pi -c "set -ex; if [ -d /home/pi/gitcache/$FORK/git ]; then \
+			git --git-dir /home/pi/gitcache/$FORK/git fetch \
+				--refmap=+refs/heads/*:refs/remotes/origin/* \
+				origin $BRANCH; \
 			mkdir BirdNET-Pi; \
 			git --git-dir /home/pi/gitcache/$FORK/git -C \$PWD/BirdNET-Pi checkout .;  \
-			git --git-dir /home/pi/gitcache/$FORK/git -C \$PWD/BirdNET-Pi pull; \
+			git --git-dir /home/pi/gitcache/$FORK/git -C \$PWD/BirdNET-Pi pull origin $BRANCH; \
 		else \
 			mkdir -p /home/pi/gitcache/$FORK; \
 			git clone --separate-git-dir /home/pi/gitcache/$FORK/git -b $BRANCH --depth=1 https://github.com/srd424/BirdNET-Pi.git /home/pi/BirdNET-Pi;  \
@@ -26,30 +30,8 @@ main () {
 	apt-get -y update && apt-get -y upgrade
 	$NEED_CADDY && HOME=/home/pi install_caddy_build
 
-	cat >>/home/pi/BirdNET-Pi/reqs/common.txt <<EOF
-attrs
-audioread
-click
-decorator
-iniconfig
-joblib
-lazy-loader
-msgpack
-numba
-numpy
-packaging
-pluggy
-pooch
-py
-pytest
-requests
-scikit-learn
-scipy
-soundfile
-soxr
-tomli
-typing-extensions
-EOF
+	cat /build-scripts/common-pip.txt >>/home/pi/BirdNET-Pi/reqs/common.txt
+
 	su -l pi -c "/bin/bash /build-scripts/pip.sh"
 
 	rm -r -f /patches

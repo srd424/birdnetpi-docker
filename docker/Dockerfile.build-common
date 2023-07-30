@@ -5,7 +5,7 @@ ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 
 ARG FORK=srd424
-ARG BRANCH=modules
+ARG BRANCH=streamlit
 
 ADD --chmod=0644 build /build-scripts
 ADD --chmod=0644 patches /patches

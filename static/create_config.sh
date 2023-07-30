@@ -22,6 +22,15 @@ set -x
 		[ -e $f ] || :>$f
 		chown pi:pi $f
 	done
+
+	envopts=`mktemp`
+	set | grep ^BNPI | sed -e 's/^BNPI_//' >$envopts
+	if [ -s $envopts ]; then
+		cat /etc/birdnet/birdnet.conf $envopts >/run/birdnet.conf
+		rm -f /etc/birdnet/birdnet.conf
+		ln -s /run/birdnet.conf /etc/birdnet
+	fi
+	rm $envopts
 	exit 0
 ) 9>/state/.lock
 

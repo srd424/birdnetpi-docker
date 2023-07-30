@@ -1,15 +1,15 @@
 FROM bnpi-build-common AS build
 
-ARG MODULES="site-main"
+ARG MODULES
 ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
 ADD --chmod=0644 build /build-scripts
-RUN bash -x /build-scripts/build-site-main.sh
+RUN bash -x /build-scripts/build-final.sh
 
 FROM bnpi-common AS final
-ARG MODULES="site-main"
+ARG MODULES
 ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
@@ -27,5 +27,6 @@ RUN bash -c "if [ -e /usr/bin/caddy ]; then \
                         /lib/systemd/system/caddy.service; \
                 setcap cap_net_bind_service=+ep /usr/bin/caddy; \
         fi"
+RUN sed -i -re 's/^(.*reverse_proxy \/stats\* ).*$/\1\{\$BNPI_STREAMLIT:"localhost:8501"}/' /etc/caddy/Caddyfile
 RUN bash -c "d=/etc/systemd/system//php7.4-fpm.service.d; mkdir \$d && echo -e '[Service]\nExecStartPre=/bin/bash -c \"mkdir /run/php; chown www-data:www-data /run/php; chmod 0755 /run/php\"' >\$d/mkdir.conf"
 

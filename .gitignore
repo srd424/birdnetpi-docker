@@ -6,3 +6,5 @@ logs
 .common
 .server
 .site-main
+.stamp
+.site-streamlit

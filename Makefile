@@ -1,18 +1,25 @@
 export OPTSFILE=sd
 
-all: site-main server
+all: site-main server site-streamlit
+#all: site-main server
 
 site-main: .site-main
+
+site-streamlit: .site-streamlit
 
 server: .server
 
 common: .common
 
-.site-main: .common docker/Dockerfile.site-main build/final.sh build/build-site-main.sh
-	MODULES=main ./docker.sh site-main
+.site-streamlit: .site-main docker/Dockerfile.site-streamlit build/final.sh build/build-final.sh
+	MODULES=streamlit ./docker.sh site-streamlit
+	touch .site-streamlit
+
+.site-main: .common docker/Dockerfile.site-main build/final.sh build/build-final.sh
+	MODULES="main" ./docker.sh site-main
 	touch .site-main
 
-.server: .common docker/Dockerfile.server build/final.sh build/build-server.sh
+.server: .common docker/Dockerfile.server build/final.sh build/build-final.sh
 	MODULES=server ./docker.sh server
 	touch .server
 

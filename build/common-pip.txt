@@ -1,22 +1,30 @@
 attrs
-audioread
+certifi
+cffi
+charset-normalizer
 click
-decorator
+idna
 iniconfig
 joblib
-lazy-loader
-msgpack
-numba
-numpy
+llvmlite
+
+# we seem to have to force a version of numpy here,
+# otherwise we end up with 1.24.4 and 1.25.1 for reasons
+# that are unclear
+numpy==1.24.4
+
 packaging
 pluggy
-pooch
 py
 pytest
 requests
-scikit-learn
+
+# scipy is large and not actually needed by site-main,
+# but is by server and also streamlit
 scipy
-soundfile
-soxr
+
+setuptools
+threadpoolctl
 tomli
 typing-extensions
+urllib3
