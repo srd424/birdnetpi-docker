@@ -5,7 +5,7 @@ on:
   
 env:
   REGISTRY: ghcr.io/srd424
-  IMAGE_TAG: amd64
+  IMAGE_TAG: ${{ github.ref_name == 'main' && 'amd64' || github.ref_name }}
   
 jobs:
   build-all:
