@@ -11,6 +11,10 @@ if [ -n "$MODULES" ]; then
 	OPTS="${OPTS} --build-arg \"MODULES=$MODULES\""
 fi
 
+if [ -n "$BRANCH" ]; then
+	OPTS="${OPTS} --build-arg \"BRANCH=$BRANCH\""
+fi
+
 IMG=$1
 
 set -o pipefail
