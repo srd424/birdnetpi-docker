@@ -2,11 +2,15 @@
 set -e
 set -x
 
+script=/home/pi/BirdNET-Pi/scripts/install_services.sh
+sed -i -e '/^chown_things$/d' $script
+sed -i -e '/^[ \t]*chmod -R g+rw \$my_dir/d' $script
+
 env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi \
 	MODULES_SKIP_BUILD=true \
 	MODULES_ENABLED="$MODULES" \
 	DEBIAN_FRONTEND="noninteractive" \
-	/home/pi/BirdNET-Pi/scripts/install_services.sh
+	$script
 
 rm -f /usr/local/lib/ffmpeg/ffprobe
 

@@ -1,4 +1,4 @@
-FROM bnpi-build-common AS build
+FROM bnpi-build-site-common AS build
 
 ARG MODULES
 ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
@@ -8,13 +8,15 @@ RUN echo "modules is $MODULES"
 ADD --chmod=0644 build /build-scripts
 RUN bash -x /build-scripts/build-final.sh
 
-FROM bnpi-common AS final
+FROM bnpi-site-common AS final
 ARG MODULES
 ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
-COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+#COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+COPY --from=build /home/pi/BirdNET-Pi/birdnet /bn
+RUN cp -avuT /bn /home/pi/BirdNET-Pi/birdnet && rm -r /bn
 ADD --chmod=0644 build /build-scripts
 RUN bash -x /build-scripts/final.sh
 RUN sed -i -e 's/--server.address localhost//' /usr/lib/systemd/system/birdnet_stats.service

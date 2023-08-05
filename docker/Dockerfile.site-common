@@ -1,0 +1,14 @@
+FROM bnpi-build-site-common AS build
+
+FROM bnpi-common AS final
+ARG MODULES="main"
+ARG aptopts="-qq -y --no-install-recommends"
+ARG PYTHONDONTWRITEBYTECODE=1
+RUN echo "modules is $MODULES"
+
+#COPY --from=build /home/pi/BirdNET-Pi /home/pi/BirdNET-Pi
+#COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+# Docker is stupid
+COPY --from=build /home/pi/BirdNET-Pi/birdnet /bn
+
+RUN bash -x /build-scripts/site-common.sh

@@ -1,0 +1,3 @@
+#! /bin/bash
+
+for i in site-streamlit server site-main; do podman image tree localhost/bnpi-$i | grep ^.── | sed -e 's/^.── //'; done | sort | uniq | awk '{TOT+=gensub(/MB/,"",1,$4)}  END {print TOT}'

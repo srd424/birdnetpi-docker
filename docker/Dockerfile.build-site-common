@@ -1,0 +1,9 @@
+FROM bnpi-build-common AS build
+
+ARG MODULES
+ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
+ARG PYTHONDONTWRITEBYTECODE=1
+RUN echo "modules is $MODULES"
+
+RUN bash -x /build-scripts/build-site-common.sh
+

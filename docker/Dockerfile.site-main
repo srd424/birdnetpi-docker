@@ -1,20 +1,20 @@
-FROM bnpi-build-common AS build
+#FROM bnpi-build-common AS build
+#
+#ARG MODULES
+#ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
+#ARG PYTHONDONTWRITEBYTECODE=1
+#RUN echo "modules is $MODULES"
+#
+#ADD --chmod=0644 build /build-scripts
+#RUN bash -x /build-scripts/build-final.sh
 
+FROM bnpi-site-common AS final
 ARG MODULES
 ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
-ADD --chmod=0644 build /build-scripts
-RUN bash -x /build-scripts/build-final.sh
-
-FROM bnpi-common AS final
-ARG MODULES
-ARG aptopts="-y -qq --no-install-recommends -o Dpkg::options::=--force-confold"
-ARG PYTHONDONTWRITEBYTECODE=1
-RUN echo "modules is $MODULES"
-
-COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+#COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
 ADD --chmod=0644 build /build-scripts
 RUN rm -r /etc/caddy
 RUN eatmydata apt-get $aptopts install cron

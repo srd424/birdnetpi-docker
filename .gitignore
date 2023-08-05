@@ -8,3 +8,5 @@ logs
 .site-main
 .stamp
 .site-streamlit
+.build-site-common
+.site-common

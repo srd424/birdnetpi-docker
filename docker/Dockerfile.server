@@ -16,8 +16,11 @@ ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
 RUN du -sch /home/pi/BirdNET-Pi/birdnet
-COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+#COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+COPY --from=build /home/pi/BirdNET-Pi/birdnet bn
+RUN cp -avuT /bn /home/pi/BirdNET-Pi/birdnet && rm -r /bn
 RUN du -sch /home/pi/BirdNET-Pi/birdnet
+
 ADD --chmod=0644 build /build-scripts
 RUN bash -x /build-scripts/final.sh
 
