@@ -31,6 +31,10 @@ set -x
 		ln -s /run/birdnet.conf /etc/birdnet
 	fi
 	rm $envopts
+
+	sed -i -e '/^sudo systemctl/d' /usr/local/bin/update_caddyfile.sh
+	env HOME=/home/pi USER=pi /usr/local/bin/update_caddyfile.sh
+
 	exit 0
 ) 9>/state/.lock
 
