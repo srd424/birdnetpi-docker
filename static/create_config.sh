@@ -34,6 +34,7 @@ set -x
 
 	sed -i -e '/^sudo systemctl/d' /usr/local/bin/update_caddyfile.sh
 	env HOME=/home/pi USER=pi /usr/local/bin/update_caddyfile.sh
+	sed -i -re 's/^(.*reverse_proxy \/stats\* ).*$/\1\{$BNPI_STREAMLIT:"localhost:8501"}/' /etc/caddy/Caddyfile
 
 	exit 0
 ) 9>/state/.lock
