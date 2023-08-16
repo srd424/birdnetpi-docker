@@ -30,16 +30,31 @@ podman run --name bnpi-server -p 5050:5050 \
 
 ## Using the streamlit app ##
 
-TODO
+If you want the advanced "Species stats" data visualization web app that uses streamlit, you need the `bnpi-site-streamlit`image:
+```
+podman run --name bnpi-server -p 8051:8051 \
+  -v $HOME/birdnet.state:/state \
+  ghcr.io/srd424/bnpi-site-streamlit:amd64
+```
+You then need to set the `BNPI_STREAMLIT` environment variable to the host/IP where it can be reached when starting the main site container:
+```
+podman run --name bnpi-site-main -p 8080:80 \
+  -v $HOME/birdnet.state:/state -v $HOME/BirdSongs:/home/pi/BirdSongs \
+  -e BNPI_STREAMLIT=my-server.lan:8501 \
+  ghcr.io/srd424/bnpi-site-main:amd64
+```
 
 ## Using docker instead of podman ##
-With docker you need to explicitly add the `CAP_NET_BIND_SERVICE` capability so caddy can bind to port 80:
+With docker you need to explicitly add the `CAP_NET_BIND_SERVICE` capability when running the main site container, so caddy can bind to port 80:
 ```
 docker run  --name bnpi-site-main -p 8080:80 \
   -v $HOME/birdnet.state:/state -v $HOME/BirdSongs:/home/pi/BirdSongs \
-  --cap-add=cap_net_bind_service ghcr.io/srd424/birdnetpi-amd64:latest
+  --cap-add=cap_net_bind_service ghcr.io/srd424/bnpi-site-main:amd64
 ```
 
+## Image size ##
+
+TODO
 
 ## Changelog ##
 
