@@ -54,13 +54,15 @@ docker run  --name bnpi-site-main -p 8080:80 \
 
 ## Image size ##
 
-TODO
+These images share several layers to avoid duplicating on disk some large python packages etc that are used by multiple images. The apparent total size of all three images is current ~ 2.5GB, but in reality they should only use up ~ 1.3GB because of this. There is some more work that could theoretically be done here, but it would probably involve some nasty hacks so may not be worth it.
 
 ## Changelog ##
 
+**14-Aug-2023:** silly/nasty security bug where the caddy config wasn't being generated using the set password. Some of the php scripts check this again anyway, but things like the underlying `/stream` URL for the live stream audio weren't protected. Fixed.
+
 **29-Jul-2023:** the streamlit analysis app ("Species Stats") now works again.
 
-**28-Jul-2023:** there's now a "modularized" version of this, see [this discussion thread](https://github.com/mcguirepr89/BirdNET-Pi/discussions/984). It seems to be basically stable and useful now, I need to properly update this documentation to reflect.
+**28-Jul-2023:** these images are now "modularized", see [this discussion thread](https://github.com/mcguirepr89/BirdNET-Pi/discussions/984).
 
 **13-Jul-2023:** Removed systemd to make it work sanely with docker; this is now merged into main branch and package, and again, I'm running it 'in prod' with no problems .. yet.
 
