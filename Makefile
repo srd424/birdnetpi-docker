@@ -12,6 +12,8 @@ server: .server
 
 common: .common
 
+server-proxy: .server-proxy
+
 .site-streamlit: .site-common docker/Dockerfile.site-streamlit build/final.sh build/build-final.sh
 	MODULES=streamlit ./docker.sh site-streamlit
 	touch .site-streamlit
