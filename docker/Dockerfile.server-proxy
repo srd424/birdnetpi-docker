@@ -1,0 +1,28 @@
+FROM bnpi-build-common AS build
+
+ARG MODULES="server"
+ARG aptopts="-qq -y --no-install-recommends"
+ARG PYTHONDONTWRITEBYTECODE=1
+RUN echo "modules is $MODULES"
+
+ADD --chmod=0644 build /build-scripts
+RUN bash -x /build-scripts/build-final.sh
+
+FROM bnpi-common AS final
+ARG MODULES="server"
+ARG aptopts="-qq -y --no-install-recommends"
+ARG PYTHONDONTWRITEBYTECODE=1
+RUN echo "modules is $MODULES"
+
+ADD --chmod=0755 static/server-proxy.py /usr/local/bin/server-proxy.py
+
+#COPY --from=build /home/pi/BirdNET-Pi/birdnet /home/pi/BirdNET-Pi/birdnet
+COPY --from=build /home/pi/BirdNET-Pi/birdnet bn
+RUN cp -avuT /bn /home/pi/BirdNET-Pi/birdnet && rm -r /bn
+
+ADD --chmod=0644 build /build-scripts
+RUN bash -x /build-scripts/final.sh
+RUN \
+	mv /usr/local/bin/server.py /usr/local/bin/server.py.orig && \
+	ln -s /usr/local/bin/server-proxy.py /usr/local/bin/server.py
+RUN rm -f /home/pi/BirdNET-Pi/scripts/gotty

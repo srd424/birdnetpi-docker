@@ -10,3 +10,4 @@ logs
 .site-streamlit
 .build-site-common
 .site-common
+.server-proxy

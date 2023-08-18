@@ -20,6 +20,10 @@ common: .common
 	MODULES="main" ./docker.sh site-main
 	touch .site-main
 
+.server-proxy: .common docker/Dockerfile.server-proxy build/final.sh build/build-final.sh static/server-proxy.py
+	MODULES=server ./docker.sh server-proxy
+	touch .server-proxy
+
 .server: .common docker/Dockerfile.server build/final.sh build/build-final.sh
 	MODULES=server ./docker.sh server
 	touch .server
@@ -32,11 +36,11 @@ common: .common
 	MODULES=common ./docker.sh build-common
 	touch .build-common
 
-.site-common: .common .build-site-common docker/Dockerfile.site-common build/site-common.sh static
+.site-common: .common .build-site-common docker/Dockerfile.site-common build/site-common.sh static/common
 	MODULES=main ./docker.sh site-common
 	touch .site-common
 
-.common: .base .build-common docker/Dockerfile.common build/common.sh static
+.common: .base .build-common docker/Dockerfile.common build/common.sh static/common
 	MODULES=common ./docker.sh common
 	touch .common
 

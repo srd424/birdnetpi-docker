@@ -1,0 +1,876 @@
+diff --git a/Dockerfile b/Dockerfile
+index 1a1b85c..c3d4c1b 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -4,15 +4,13 @@ FROM python:3.8-slim
+ # Install required packages while keeping the image small
+ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg  && rm -rf /var/lib/apt/lists/*
+ 
+-# Install required Python packages
+-RUN pip3 install numpy scipy librosa bottle resampy
+-
+-# Install Tensforflow
+-RUN pip3 install tensorflow 
++COPY requirements.txt /
++# Install Python packages from requirements.txt
++RUN pip install -r requirements.txt
+ 
+ # Import all scripts
+ COPY . ./
+ 
+ # Add entry point to run the script
+ ENTRYPOINT [ "python3" ]
+-CMD [ "analyze.py" ]
++CMD [ "server.py" ]
+diff --git a/analyze.py b/analyze.py
+index a8678ac..8775da3 100644
+--- a/analyze.py
++++ b/analyze.py
+@@ -77,6 +77,21 @@ def predictSpeciesList():
+         if s[0] >= cfg.LOCATION_FILTER_THRESHOLD:
+             cfg.SPECIES_LIST.append(s[1])
+ 
++
++def predictSpeciesListWithScore():
++
++    l_filter = model.explore(cfg.LATITUDE, cfg.LONGITUDE, cfg.WEEK)
++
++    specieswithscore = []
++
++    for s in l_filter:
++        if s[0] >= cfg.LOCATION_FILTER_THRESHOLD:
++            speciestuple = (s[1], float(s[0]))
++            specieswithscore.append(speciestuple)
++
++    return specieswithscore
++
++
+ def saveResultFile(r, path, afile_path):
+ 
+     # Make folder if it doesn't exist
+diff --git a/analyzewithserver.py b/analyzewithserver.py
+new file mode 100644
+index 0000000..a8678ac
+--- /dev/null
++++ b/analyzewithserver.py
+@@ -0,0 +1,498 @@
++import os
++import sys
++import json
++import operator
++import argparse
++import datetime
++import traceback
++
++from multiprocessing import Pool, freeze_support
++
++import numpy as np
++
++import config as cfg
++import audio
++import model
++
++def clearErrorLog():
++
++    if os.path.isfile(cfg.ERROR_LOG_FILE):
++        os.remove(cfg.ERROR_LOG_FILE)
++
++def writeErrorLog(ex: Exception):
++
++    with open(cfg.ERROR_LOG_FILE, 'a') as elog:
++        elog.write(''.join(traceback.TracebackException.from_exception(ex).format()) + '\n')
++
++def parseInputFiles(path, allowed_filetypes=['wav', 'flac', 'mp3', 'ogg', 'm4a']):
++
++    # Add backslash to path if not present
++    if not path.endswith(os.sep):
++        path += os.sep
++
++    # Get all files in directory with os.walk
++    files = []
++    for root, dirs, flist in os.walk(path):
++        for f in flist:
++            if len(f.rsplit('.', 1)) > 1 and f.rsplit('.', 1)[1].lower() in allowed_filetypes:
++                files.append(os.path.join(root, f))
++
++    print('Found {} files to analyze'.format(len(files)))
++
++    return sorted(files)
++
++def loadCodes():
++
++    with open(cfg.CODES_FILE, 'r') as cfile:
++        codes = json.load(cfile)
++
++    return codes
++
++def loadLabels(labels_file):
++
++    labels = []
++    with open(labels_file, 'r', encoding='utf-8') as lfile:
++        for line in lfile.readlines():
++            labels.append(line.replace('\n', ''))    
++
++    return labels
++
++def loadSpeciesList(fpath):
++
++    slist = []
++    if not fpath == None:
++        with open(fpath, 'r', encoding='utf-8') as sfile:
++            for line in sfile.readlines():
++                species = line.replace('\r', '').replace('\n', '')
++                slist.append(species)
++
++    return slist
++
++def predictSpeciesList():
++
++    l_filter = model.explore(cfg.LATITUDE, cfg.LONGITUDE, cfg.WEEK)
++    cfg.SPECIES_LIST_FILE = None
++    cfg.SPECIES_LIST = []
++    for s in l_filter:
++        if s[0] >= cfg.LOCATION_FILTER_THRESHOLD:
++            cfg.SPECIES_LIST.append(s[1])
++
++def saveResultFile(r, path, afile_path):
++
++    # Make folder if it doesn't exist
++    if len(os.path.dirname(path)) > 0 and not os.path.exists(os.path.dirname(path)):
++        os.makedirs(os.path.dirname(path))
++
++    # Selection table
++    out_string = ''
++
++    if cfg.RESULT_TYPE == 'table':
++
++        # Raven selection header
++        header = 'Selection\tView\tChannel\tBegin Time (s)\tEnd Time (s)\tLow Freq (Hz)\tHigh Freq (Hz)\tSpecies Code\tCommon Name\tConfidence\n'
++        selection_id = 0
++
++        # Write header
++        out_string += header
++        
++        # Extract valid predictions for every timestamp
++        for timestamp in getSortedTimestamps(r):
++            rstring = ''
++            start, end = timestamp.split('-')
++            for c in r[timestamp]:
++                if c[1] > cfg.MIN_CONFIDENCE and (c[0] in cfg.SPECIES_LIST or len(cfg.SPECIES_LIST) == 0):
++                    selection_id += 1
++                    label = cfg.TRANSLATED_LABELS[cfg.LABELS.index(c[0])]
++                    rstring += '{}\tSpectrogram 1\t1\t{}\t{}\t{}\t{}\t{}\t{}\t{:.4f}\n'.format(
++                        selection_id, 
++                        start, 
++                        end, 
++                        150, 
++                        15000, 
++                        cfg.CODES[c[0]] if c[0] in cfg.CODES else c[0], 
++                        label.split('_')[1] if len(label.split('_')) > 1 else label,
++                        c[1])
++
++            # Write result string to file
++            if len(rstring) > 0:
++                out_string += rstring
++
++    elif cfg.RESULT_TYPE == 'audacity':
++
++        # Audacity timeline labels
++        for timestamp in getSortedTimestamps(r):
++            rstring = ''
++            for c in r[timestamp]:
++                if c[1] > cfg.MIN_CONFIDENCE and (c[0] in cfg.SPECIES_LIST or len(cfg.SPECIES_LIST) == 0):
++                    label = cfg.TRANSLATED_LABELS[cfg.LABELS.index(c[0])]
++                    rstring += '{}\t{}\t{:.4f}\n'.format(
++                        timestamp.replace('-', '\t'), 
++                        label.replace('_', ', '), 
++                        c[1])
++
++            # Write result string to file
++            if len(rstring) > 0:
++                out_string += rstring
++
++    elif cfg.RESULT_TYPE == 'r':
++
++        # Output format for R
++        header = 'filepath,start,end,scientific_name,common_name,confidence,lat,lon,week,overlap,sensitivity,min_conf,species_list,model'
++        out_string += header
++
++        for timestamp in getSortedTimestamps(r):
++            rstring = ''
++            start, end = timestamp.split('-')
++            for c in r[timestamp]:
++                if c[1] > cfg.MIN_CONFIDENCE and (c[0] in cfg.SPECIES_LIST or len(cfg.SPECIES_LIST) == 0):                    
++                    label = cfg.TRANSLATED_LABELS[cfg.LABELS.index(c[0])]
++                    rstring += '\n{},{},{},{},{},{:.4f},{:.4f},{:.4f},{},{},{},{},{},{}'.format(
++                        afile_path,
++                        start,
++                        end,
++                        label.split('_')[0],
++                        label.split('_')[1] if len(label.split('_')) > 1 else label,
++                        c[1],
++                        cfg.LATITUDE,
++                        cfg.LONGITUDE,
++                        cfg.WEEK,
++                        cfg.SIG_OVERLAP,
++                        (1.0 - cfg.SIGMOID_SENSITIVITY) + 1.0,
++                        cfg.MIN_CONFIDENCE,
++                        cfg.SPECIES_LIST_FILE,
++                        os.path.basename(cfg.MODEL_PATH)
++                    )
++            # Write result string to file
++            if len(rstring) > 0:
++                out_string += rstring
++
++    elif cfg.RESULT_TYPE == 'kaleidoscope':
++
++        # Output format for kaleidoscope
++        header = 'INDIR,FOLDER,IN FILE,OFFSET,DURATION,scientific_name,common_name,confidence,lat,lon,week,overlap,sensitivity'
++        out_string += header
++        
++        folder_path, filename = os.path.split(afile_path)
++        parent_folder, folder_name = os.path.split(folder_path)
++
++        for timestamp in getSortedTimestamps(r):
++            rstring = ''
++            start, end = timestamp.split('-')
++            for c in r[timestamp]:
++                if c[1] > cfg.MIN_CONFIDENCE and (c[0] in cfg.SPECIES_LIST or len(cfg.SPECIES_LIST) == 0):                    
++                    label = cfg.TRANSLATED_LABELS[cfg.LABELS.index(c[0])]
++                    rstring += '\n{},{},{},{},{},{},{},{:.4f},{:.4f},{:.4f},{},{},{}'.format(
++                        parent_folder.rstrip('/'),
++                        folder_name,
++                        filename,
++                        start,
++                        float(end)-float(start),
++                        label.split('_')[0],
++                        label.split('_')[1] if len(label.split('_')) > 1 else label,
++                        c[1],
++                        cfg.LATITUDE,
++                        cfg.LONGITUDE,
++                        cfg.WEEK,
++                        cfg.SIG_OVERLAP,
++                        (1.0 - cfg.SIGMOID_SENSITIVITY) + 1.0
++                    )
++            # Write result string to file
++            if len(rstring) > 0:
++                out_string += rstring
++
++    else:
++
++        # CSV output file
++        header = 'Start (s),End (s),Scientific name,Common name,Confidence\n'
++
++        # Write header
++        out_string += header
++
++        for timestamp in getSortedTimestamps(r):
++            rstring = ''
++            for c in r[timestamp]:                
++                start, end = timestamp.split('-')
++                if c[1] > cfg.MIN_CONFIDENCE and (c[0] in cfg.SPECIES_LIST or len(cfg.SPECIES_LIST) == 0):
++                    label = cfg.TRANSLATED_LABELS[cfg.LABELS.index(c[0])]
++                    rstring += '{},{},{},{},{:.4f}\n'.format(
++                        start,
++                        end,
++                        label.split('_')[0],
++                        label.split('_')[1] if len(label.split('_')) > 1 else label,
++                        c[1])
++
++            # Write result string to file
++            if len(rstring) > 0:
++                out_string += rstring
++
++    # Save as file
++    with open(path, 'w', encoding="utf-8") as rfile:
++        rfile.write(out_string)
++
++
++def getSortedTimestamps(results):
++    return sorted(results, key=lambda t: float(t.split('-')[0]))
++
++
++def getRawAudioFromFile(fpath):
++
++    # Open file
++    sig, rate = audio.openAudioFile(fpath, cfg.SAMPLE_RATE)
++
++    # Split into raw audio chunks
++    chunks = audio.splitSignal(sig, rate, cfg.SIG_LENGTH, cfg.SIG_OVERLAP, cfg.SIG_MINLEN)
++
++    return chunks
++
++def predict(samples):
++
++    # Prepare sample and pass through model
++    data = np.array(samples, dtype='float32')
++    prediction = model.predict(data)
++
++    # Logits or sigmoid activations?
++    if cfg.APPLY_SIGMOID:
++        prediction = model.flat_sigmoid(np.array(prediction), sensitivity=-cfg.SIGMOID_SENSITIVITY)
++
++    return prediction
++
++def analyzeFile(item):
++
++    # Get file path and restore cfg
++    fpath = item[0]
++    cfg.setConfig(item[1])
++
++    # Start time
++    start_time = datetime.datetime.now()
++
++    # Status
++    print('Analyzing {}'.format(fpath), flush=True)
++
++    try:
++        # Open audio file and split into 3-second chunks
++        chunks = getRawAudioFromFile(fpath)
++
++    # If no chunks, show error and skip
++    except Exception as ex:
++        print('Error: Cannot open audio file {}'.format(fpath), flush=True)
++        writeErrorLog(ex)
++        return False
++
++    # Process each chunk
++    try:
++        start, end = 0, cfg.SIG_LENGTH
++        results = {}
++        samples = []
++        timestamps = []
++        for c in range(len(chunks)):
++
++            # Add to batch
++            samples.append(chunks[c])
++            timestamps.append([start, end])
++
++            # Advance start and end
++            start += cfg.SIG_LENGTH - cfg.SIG_OVERLAP
++            end = start + cfg.SIG_LENGTH
++
++            # Check if batch is full or last chunk        
++            if len(samples) < cfg.BATCH_SIZE and c < len(chunks) - 1:
++                continue
++
++            # Predict
++            p = predict(samples)
++
++            # Add to results
++            for i in range(len(samples)):
++
++                # Get timestamp
++                s_start, s_end = timestamps[i]
++
++                # Get prediction
++                pred = p[i]
++
++                # Assign scores to labels
++                p_labels = dict(zip(cfg.LABELS, pred))
++
++                # Sort by score
++                p_sorted =  sorted(p_labels.items(), key=operator.itemgetter(1), reverse=True)
++
++                # Store top 5 results and advance indicies
++                results[str(s_start) + '-' + str(s_end)] = p_sorted
++
++            # Clear batch
++            samples = []
++            timestamps = []  
++    except Exception as ex:
++        # Write error log
++        print('Error: Cannot analyze audio file {}.\n'.format(fpath), flush=True)
++        writeErrorLog(ex)
++        return False     
++
++    # Save as selection table
++    try:
++
++        # We have to check if output path is a file or directory
++        if not cfg.OUTPUT_PATH.rsplit('.', 1)[-1].lower() in ['txt', 'csv']:
++
++            rpath = fpath.replace(cfg.INPUT_PATH, '')
++            rpath = rpath[1:] if rpath[0] in ['/', '\\'] else rpath
++
++            # Make target directory if it doesn't exist
++            rdir = os.path.join(cfg.OUTPUT_PATH, os.path.dirname(rpath))
++            if not os.path.exists(rdir):
++                os.makedirs(rdir, exist_ok=True)
++
++            if cfg.RESULT_TYPE == 'table':
++                rtype = '.BirdNET.selection.table.txt' 
++            elif cfg.RESULT_TYPE == 'audacity':
++                rtype = '.BirdNET.results.txt'
++            else:
++                rtype = '.BirdNET.results.csv'
++            saveResultFile(results, os.path.join(cfg.OUTPUT_PATH, rpath.rsplit('.', 1)[0] + rtype), fpath)
++        else:
++            saveResultFile(results, cfg.OUTPUT_PATH, fpath)        
++    except Exception as ex:
++        # Write error log
++        print('Error: Cannot save result for {}.\n'.format(fpath), flush=True)
++        writeErrorLog(ex)
++
++        return False
++
++    delta_time = (datetime.datetime.now() - start_time).total_seconds()
++    print('Finished {} in {:.2f} seconds'.format(fpath, delta_time), flush=True)
++
++    return True
++
++if __name__ == '__main__':
++
++    # Freeze support for excecutable
++    freeze_support()
++
++    # Clear error log
++    #clearErrorLog()
++
++    # Parse arguments
++    parser = argparse.ArgumentParser(description='Analyze audio files with BirdNET')
++    parser.add_argument('--i', default='example/', help='Path to input file or folder. If this is a file, --o needs to be a file too.')
++    parser.add_argument('--o', default='example/', help='Path to output file or folder. If this is a file, --i needs to be a file too.')
++    parser.add_argument('--lat', type=float, default=-1, help='Recording location latitude. Set -1 to ignore.')
++    parser.add_argument('--lon', type=float, default=-1, help='Recording location longitude. Set -1 to ignore.')
++    parser.add_argument('--week', type=int, default=-1, help='Week of the year when the recording was made. Values in [1, 48] (4 weeks per month). Set -1 for year-round species list.')
++    parser.add_argument('--slist', default='', help='Path to species list file or folder. If folder is provided, species list needs to be named \"species_list.txt\". If lat and lon are provided, this list will be ignored.')
++    parser.add_argument('--sensitivity', type=float, default=1.0, help='Detection sensitivity; Higher values result in higher sensitivity. Values in [0.5, 1.5]. Defaults to 1.0.')
++    parser.add_argument('--min_conf', type=float, default=0.1, help='Minimum confidence threshold. Values in [0.01, 0.99]. Defaults to 0.1.')
++    parser.add_argument('--overlap', type=float, default=0.0, help='Overlap of prediction segments. Values in [0.0, 2.9]. Defaults to 0.0.')
++    parser.add_argument('--rtype', default='table', help='Specifies output format. Values in [\'table\', \'audacity\', \'r\',  \'kaleidoscope\', \'csv\']. Defaults to \'table\' (Raven selection table).')
++    parser.add_argument('--threads', type=int, default=4, help='Number of CPU threads.')
++    parser.add_argument('--batchsize', type=int, default=1, help='Number of samples to process at the same time. Defaults to 1.')
++    parser.add_argument('--locale', default='en', help='Locale for translated species common names. Values in [\'af\', \'de\', \'it\', ...] Defaults to \'en\'.')
++    parser.add_argument('--sf_thresh', type=float, default=0.03, help='Minimum species occurrence frequency threshold for location filter. Values in [0.01, 0.99]. Defaults to 0.03.')
++    parser.add_argument('--classifier', default=None, help='Path to custom trained classifier. Defaults to None. If set, --lat, --lon and --locale are ignored.') 
++
++    args = parser.parse_args()
++
++    # Set paths relative to script path (requested in #3)
++    cfg.MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), cfg.MODEL_PATH)
++    cfg.LABELS_FILE = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), cfg.LABELS_FILE)
++    cfg.TRANSLATED_LABELS_PATH = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), cfg.TRANSLATED_LABELS_PATH)
++    cfg.MDATA_MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), cfg.MDATA_MODEL_PATH)
++    cfg.CODES_FILE = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), cfg.CODES_FILE)
++    cfg.ERROR_LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), cfg.ERROR_LOG_FILE)
++
++    # Load eBird codes, labels
++    cfg.CODES = loadCodes()
++    cfg.LABELS = loadLabels(cfg.LABELS_FILE)
++
++    # Set custom classifier?
++    if args.classifier is not None:
++        cfg.CUSTOM_CLASSIFIER = args.classifier # we treat this as absolute path, so no need to join with dirname
++        cfg.LABELS_FILE = args.classifier.replace('.tflite', '_Labels.txt') # same for labels file
++        cfg.LABELS = loadLabels(cfg.LABELS_FILE)
++        args.lat = -1
++        args.lon = -1
++        args.locale = 'en'
++
++    # Load translated labels
++    lfile = os.path.join(cfg.TRANSLATED_LABELS_PATH, os.path.basename(cfg.LABELS_FILE).replace('.txt', '_{}.txt'.format(args.locale)))
++    if not args.locale in ['en'] and os.path.isfile(lfile):
++        cfg.TRANSLATED_LABELS = loadLabels(lfile)
++    else:
++        cfg.TRANSLATED_LABELS = cfg.LABELS   
++
++    ### Make sure to comment out appropriately if you are not using args. ###
++
++    # Load species list from location filter or provided list
++    cfg.LATITUDE, cfg.LONGITUDE, cfg.WEEK = args.lat, args.lon, args.week
++    cfg.LOCATION_FILTER_THRESHOLD = max(0.01, min(0.99, float(args.sf_thresh)))
++    if cfg.LATITUDE == -1 and cfg.LONGITUDE == -1:
++        if len(args.slist) == 0:
++            cfg.SPECIES_LIST_FILE = None
++        else:
++            cfg.SPECIES_LIST_FILE = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), args.slist)
++            if os.path.isdir(cfg.SPECIES_LIST_FILE):
++                cfg.SPECIES_LIST_FILE = os.path.join(cfg.SPECIES_LIST_FILE, 'species_list.txt')
++        cfg.SPECIES_LIST = loadSpeciesList(cfg.SPECIES_LIST_FILE)
++    else:
++        predictSpeciesList()
++    if len(cfg.SPECIES_LIST) == 0:
++        print('Species list contains {} species'.format(len(cfg.LABELS)))
++    else:        
++        print('Species list contains {} species'.format(len(cfg.SPECIES_LIST)))
++
++    # Set input and output path    
++    cfg.INPUT_PATH = args.i
++    cfg.OUTPUT_PATH = args.o
++
++    # Parse input files
++    if os.path.isdir(cfg.INPUT_PATH):
++        cfg.FILE_LIST = parseInputFiles(cfg.INPUT_PATH)  
++    else:
++        cfg.FILE_LIST = [cfg.INPUT_PATH]
++
++    # Set confidence threshold
++    cfg.MIN_CONFIDENCE = max(0.01, min(0.99, float(args.min_conf)))
++
++    # Set sensitivity
++    cfg.SIGMOID_SENSITIVITY = max(0.5, min(1.0 - (float(args.sensitivity) - 1.0), 1.5))
++
++    # Set overlap
++    cfg.SIG_OVERLAP = max(0.0, min(2.9, float(args.overlap)))
++
++    # Set result type
++    cfg.RESULT_TYPE = args.rtype.lower()    
++    if not cfg.RESULT_TYPE in ['table', 'audacity', 'r', 'kaleidoscope', 'csv']:
++        cfg.RESULT_TYPE = 'table'
++
++    # Set number of threads
++    if os.path.isdir(cfg.INPUT_PATH):
++        cfg.CPU_THREADS = max(1, int(args.threads))
++        cfg.TFLITE_THREADS = 1
++    else:
++        cfg.CPU_THREADS = 1
++        cfg.TFLITE_THREADS = max(1, int(args.threads))
++
++    # Set batch size
++    cfg.BATCH_SIZE = max(1, int(args.batchsize))
++
++    # Add config items to each file list entry.
++    # We have to do this for Windows which does not
++    # support fork() and thus each process has to
++    # have its own config. USE LINUX!
++    flist = []
++    for f in cfg.FILE_LIST:
++        flist.append((f, cfg.getConfig()))
++
++    # Analyze files   
++    if cfg.CPU_THREADS < 2:
++        for entry in flist:
++            analyzeFile(entry)
++    else:
++        with Pool(cfg.CPU_THREADS) as p:
++            p.map(analyzeFile, flist)
++
++
++    # A few examples to test
++    # python3 analyze.py --i example/ --o example/ --slist example/ --min_conf 0.5 --threads 4
++    # python3 analyze.py --i example/soundscape.wav --o example/soundscape.BirdNET.selection.table.txt --slist example/species_list.txt --threads 8
++    # python3 analyze.py --i example/ --o example/ --lat 42.5 --lon -76.45 --week 4 --sensitivity 1.0 --rtype table --locale de
++    
+diff --git a/buildandpush.sh b/buildandpush.sh
+new file mode 100755
+index 0000000..d12e938
+--- /dev/null
++++ b/buildandpush.sh
+@@ -0,0 +1,33 @@
++#!/bin/bash  
++  
++# Define the directories and image names  
++builds=(  
++  "/home/clark/BirdNET-Analyzer mmcc73/birdnetserver:latest"  
++)  
++  
++# Loop through the builds and execute the build commands  
++for build in "${builds[@]}"; do  
++  dir=$(echo "$build" | cut -d' ' -f1)  
++  image=$(echo "$build" | cut -d' ' -f2)  
++    
++  echo "Building in directory: $dir"  
++    
++  # Change to the current directory  
++  cd "$dir" || { echo "Error: Failed to change to directory $dir"; exit 1; }  
++    
++  # Build and push the arm64 image  
++  docker buildx build --platform linux/arm64 -t "$image" --push .  
++    
++  # Build and push the amd64 image  
++  docker buildx build --platform linux/amd64 -t "$image" --push .  
++    
++  # Pull the amd64 image to update the local Docker daemon  
++  docker pull "$image"  
++    
++  # Change back to the initial directory  
++  cd - || { echo "Error: Failed to change back to the initial directory"; exit 1; }  
++  
++  echo "Finished building in directory: $dir"  
++done  
++  
++echo "All builds completed successfully."  
+diff --git a/docker-compose.yml b/docker-compose.yml
+new file mode 100644
+index 0000000..27debae
+--- /dev/null
++++ b/docker-compose.yml
+@@ -0,0 +1,7 @@
++version: "2.3"
++services:
++  birdnetserver:
++    restart: unless-stopped
++    image: birdnetserver
++    ports:
++      - 7667:8080
+diff --git a/model.py b/model.py
+index fdb8b14..0487338 100644
+--- a/model.py
++++ b/model.py
+@@ -298,4 +298,4 @@ def embeddings(sample):
+     INTERPRETER.invoke()
+     features = INTERPRETER.get_tensor(OUTPUT_LAYER_INDEX)
+ 
+-    return features
+\ No newline at end of file
++    return features
+diff --git a/requirements.txt b/requirements.txt
+new file mode 100644
+index 0000000..f7f8d30
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,6 @@
++numpy
++scipy
++librosa
++bottle
++resampy
++tflite-runtime
+\ No newline at end of file
+diff --git a/server.py b/server.py
+index 2cc8985..4d8d095 100644
+--- a/server.py
++++ b/server.py
+@@ -21,36 +21,153 @@ def writeErrorLog(msg):
+     with open(cfg.ERROR_LOG_FILE, 'a') as elog:
+         elog.write(msg + '\n')
+ 
+-def resultPooling(lines, num_results=5, pmode='avg'):
++# def resultPooling(lines, num_results=5, pmode='avg'):
++#
++#     # Parse results
++#     results = {}
++#     for line in lines:
++#         d = line.split('\t')
++#         species = d[2].replace(', ', '_')
++#         score = float(d[-1])
++#         if not species in results:
++#             results[species] = []
++#         results[species].append(score)
++#
++#     # Compute score for each species
++#     for species in results:
++#
++#         if pmode == 'max':
++#             results[species] = max(results[species])
++#         else:
++#             results[species] = sum(results[species]) / len(results[species])
++#
++#     # Sort results
++#     results = sorted(results.items(), key=lambda x: x[1], reverse=True)
++#
++#     return results[:num_results]
++
+ 
+-    # Parse results
++def resultPooling(lines, num_results=5, pmode='avg'):
++    # Initialize dictionaries to store results and max score intervals
+     results = {}
++    max_score_intervals = {}
++
++    # Iterate through each line in the input data
+     for line in lines:
++        # Split the line into components: start_time, end_time, species, and score
+         d = line.split('\t')
++        start_time, end_time = float(d[0]), float(d[1])
+         species = d[2].replace(', ', '_')
+         score = float(d[-1])
++        time_interval = (start_time, end_time)
++
++        # Initialize the species entry in the results dictionary if not present
+         if not species in results:
+-            results[species] = []
+-        results[species].append(score)
++            results[species] = {
++                'scores': [],
++                'intervals': []
++            }
++
++            # Add the score and interval to the species' results
++        results[species]['scores'].append(score)
++        results[species]['intervals'].append(time_interval)
+ 
+-    # Compute score for each species
++        # Initialize a dictionary to store the results grouped by time intervals
++    interval_results = {}
++
++    # Iterate through the results dictionary
+     for species in results:
++        # Calculate the average score for the species
++        avg_score = sum(results[species]['scores']) / len(results[species]['scores'])
+ 
+-        if pmode == 'max':
+-            results[species] = max(results[species])
++        # If pmode is 'avg', assign the average score to the species
++        if pmode == 'avg':
++            results[species]['score'] = avg_score
++            # If pmode is 'max', assign the max score and interval to the species
+         else:
+-            results[species] = sum(results[species]) / len(results[species])
++            max_score = max(results[species]['scores'])
++            max_score_index = results[species]['scores'].index(max_score)
++            max_score_interval = results[species]['intervals'][max_score_index]
++            results[species]['score'] = max_score
++            results[species]['interval'] = max_score_interval
++
++            # Sort the results by score in descending order and take the top num_results species
++    sorted_results = sorted(results.items(), key=lambda x: x[1]['score'], reverse=True)[:num_results]
+ 
+-    # Sort results
+-    results = sorted(results.items(), key=lambda x: x[1], reverse=True)
++    # Iterate through the sorted results
++    for species, species_data in sorted_results:
++        # Get the time interval where the max or average score was detected
++        time_interval = species_data['interval'] if pmode == 'max' else species_data['intervals'][0]
++
++        # Convert the interval key to a string format "x; y"
++        interval_key = f"{time_interval[0]};{time_interval[1]}"
++
++        # If the interval_key is not in the interval_results dictionary, add it
++        if interval_key not in interval_results:
++            interval_results[interval_key] = []
++
++            # Add the species and score to the appropriate interval_key in interval_results
++        interval_results[interval_key].append((species, species_data['score']))
++
++    return interval_results
+ 
+-    return results[:num_results]
+ 
+ @bottle.route('/healthcheck', method='GET')
+ def healthcheck():
+     data = {'msg': 'Server is healthy.'}
+     return json.dumps(data)
+ 
++
++@bottle.route('/predictedspecies')
++def predicted_species():
++    # Extract the input parameters from the query string
++    latitude = float(bottle.request.query.get('latitude'))
++    longitude = float(bottle.request.query.get('longitude'))
++    week_number = int(bottle.request.query.get('week_number'))
++    sf_thresh = float(bottle.request.query.get('sf_thresh'))
++    locale = bottle.request.query.get('locale')
++
++    # get localized common names
++    lfile = os.path.join(cfg.TRANSLATED_LABELS_PATH, os.path.basename(cfg.LABELS_FILE).replace('.txt', '_{}.txt'.format(locale)))
++    if not locale in ['en'] and os.path.isfile(lfile):
++        print('Getting Translated Labels', flush=True)
++        cfg.TRANSLATED_LABELS = analyze.loadLabels(lfile)
++    else:
++        print('Not Getting Translated Labels', flush=True)
++        cfg.TRANSLATED_LABELS = cfg.LABELS
++
++    cfg.LATITUDE = latitude
++    cfg.LONGITUDE = longitude
++    cfg.WEEK = week_number
++    cfg.LOCATION_FILTER_THRESHOLD = sf_thresh
++
++    specieslistwithscores = analyze.predictSpeciesListWithScore()
++
++    # Convert the data to a JSON string
++    species_list_json = json.dumps(specieslistwithscores)
++
++    # Set the 'Content-Type' header to 'application/json' and return the JSON data
++    bottle.response.content_type = 'application/json'
++    return species_list_json
++
++
++@bottle.route('/getlabels')
++def get_labels():
++    file_path = os.path.join('checkpoints', 'V2.3', 'BirdNET_GLOBAL_3K_V2.3_Labels.txt')
++
++    # Check if the file exists
++    if os.path.exists(file_path):
++        with open(file_path, 'r') as file:
++            contents = file.read()
++
++            # Set the response content type to 'text/plain'
++        bottle.response.content_type = 'text/plain'
++        return contents
++    else:
++        bottle.response.status = 404
++        return "File not found"
++
++
+ @bottle.route('/analyze', method='POST')
+ def handleRequest():
+ 
+@@ -104,7 +221,17 @@ def handleRequest():
+ 
+     # Analyze file
+     try:
+-        
++
++        # get the right labels
++        if 'locale' in mdata:
++            locale = mdata['locale']
++            lfile = os.path.join(cfg.TRANSLATED_LABELS_PATH,
++                                 os.path.basename(cfg.LABELS_FILE).replace('.txt', '_{}.txt'.format(locale)))
++            if not locale in ['en'] and os.path.isfile(lfile):
++                cfg.TRANSLATED_LABELS = analyze.loadLabels(lfile)
++            else:
++                cfg.TRANSLATED_LABELS = cfg.LABELS
++
+         # Set config based on mdata
+         if 'lat' in mdata and 'lon' in mdata:
+             cfg.LATITUDE = float(mdata['lat'])
+@@ -145,6 +272,9 @@ def handleRequest():
+                 for line in f.readlines():
+                     lines.append(line.strip())
+ 
++            #print("Lines comin' atcha:", flush=True)
++            #print(lines, flush=True)
++
+             # Pool results
+             if 'pmode' in mdata and mdata['pmode'] in ['avg', 'max']:
+                 pmode = mdata['pmode']
+@@ -156,6 +286,9 @@ def handleRequest():
+                 num_results = 5
+             results = resultPooling(lines, num_results, pmode)
+ 
++            print("Results:")
++            print(results, flush=True)
++
+             # Prepare response
+             data = {'msg': 'success', 'results': results, 'meta': mdata}
+ 
+diff --git a/test.txt b/test.txt
+new file mode 100644
+index 0000000..394d101
+--- /dev/null
++++ b/test.txt
+@@ -0,0 +1 @@
++0	3.0	Toxostoma rufum, Brown Thrasher	0.1064
+diff --git a/testclient.py b/testclient.py
+new file mode 100644
+index 0000000..45a8e55
+--- /dev/null
++++ b/testclient.py
+@@ -0,0 +1,25 @@
++import requests
++
++# Set the input parameters for the route
++latitude = 41.3176
++longitude = -81.3454
++week_number = 20
++sf_thresh = 0.03
++
++# Set the URL of your Bottle app
++url = 'http://192.168.1.75:7600/predictedspecies'
++
++# Send a GET request with the parameters
++response = requests.get(url, params={
++    'latitude': latitude,
++    'longitude': longitude,
++    'week_number': week_number,
++    'sf_thresh': sf_thresh
++})
++
++# Check if the request was successful
++if response.status_code == 200:
++    # Print the results
++    print(response.json())
++else:
++    print(f"Error: {response.status_code}")

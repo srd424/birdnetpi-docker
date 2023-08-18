@@ -14,10 +14,7 @@ env HOME=/home/pi USER=pi my_dir=/home/pi/BirdNET-Pi \
 
 rm -f /usr/local/lib/ffmpeg/ffprobe
 
-findmnt /home/pi/.cache/pip || rm -r /home/pi/.cache/pip
-rm -f /var/cache/apt/*.bin
-
-find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
+source /build-scripts/cleanup.sh
 
 f=birdnet.conf;		d=/home/pi/BirdNET-Pi; rm -f $d/$f && ln -s /state/$f $d/$f
 

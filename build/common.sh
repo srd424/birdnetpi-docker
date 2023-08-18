@@ -65,9 +65,6 @@ rm -f /usr/local/lib/ffmpeg/ffprobe
 rm -f /home/pi/BirdNET-Pi/*.whl
 rm -f /home/pi/BirdNET-Pi/model/BirdNET_6K_GLOBAL_MODEL.tflite
 
-findmnt /home/pi/.cache/pip || rm -r /home/pi/.cache/pip
-rm -f /var/cache/apt/*.bin
-
-find / -xdev -name '*.pyc' -print0 | xargs -r -0 rm -v
+source /build-scripts/cleanup.sh
 
 mkdir /state

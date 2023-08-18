@@ -6,9 +6,9 @@ ARG aptopts="-qq -y --no-install-recommends"
 ARG PYTHONDONTWRITEBYTECODE=1
 RUN echo "modules is $MODULES"
 
-ADD --chmod=0755 static/systemctl3.py /usr/bin/systemctl
-ADD --chmod=0755 static/create_config.sh /usr/local/bin
-ADD --chmod=0755 static/create_config.service /etc/systemd/system
+ADD --chmod=0755 static/common/systemctl3.py /usr/bin/systemctl
+ADD --chmod=0755 static/common/create_config.sh /usr/local/bin
+ADD --chmod=0755 static/common/create_config.service /etc/systemd/system
 COPY --from=build /home/pi/BirdNET-Pi /home/pi/BirdNET-Pi
 ADD --chmod=0644 build /build-scripts
 RUN bash -x /build-scripts/common.sh
