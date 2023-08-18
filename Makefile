@@ -1,7 +1,7 @@
 export OPTSFILE=sd
 export BRANCH=modules
 
-all: site-main server site-streamlit
+all: site-main server site-streamlit server-proxy
 #all: site-main server
 
 site-main: .site-main
